@@ -1,0 +1,23 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": { "includes": ["src/**", "!src/api/bindings/**", "!src/styles/**"] },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "noStaticElementInteractions": "off",
+        "useSemanticElements": "off",
+        "noRedundantRoles": "off",
+        "noNoninteractiveTabindex": "off",
+        "useKeyWithClickEvents": "off",
+        "useAriaPropsSupportedByRole": "off"
+      },
+      "style": { "noNonNullAssertion": "off" },
+      "suspicious": { "noArrayIndexKey": "off" },
+      "correctness": { "useExhaustiveDependencies": "off" },
+      "security": { "noDangerouslySetInnerHtml": "off" }
+    }
+  },
+  "javascript": { "formatter": { "quoteStyle": "double" } }
+}

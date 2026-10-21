@@ -1,0 +1,59 @@
+/* Complementos de styles.css para estados reales que el prototipo no muestra (entorno con avisos,
+   chips de cuentas, salida de comandos). Solo usa los tokens del diseño. */
+
+.env-line .icon.env-warn,
+.statusbar .icon.env-warn { color: var(--warn); }
+
+.titlebar, .titlebar-id { user-select: none; }
+
+.account-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.account-chip { display: inline-flex; }
+.account-chip .btn + .btn { border-inline-start: 0; border-start-start-radius: 0; border-end-start-radius: 0; padding-inline: 8px; }
+.account-chip .btn:first-child:not(:last-child) { border-start-end-radius: 0; border-end-end-radius: 0; }
+
+pre.code.code-output { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.path-row { display: flex; gap: var(--space-2); margin-block-end: var(--space-4); }
+
+.repo-item .skeleton { width: 34px; height: 18px; border-radius: var(--radius-pill); }
+
+.kv-row-help { font-size: var(--text-xs); color: var(--muted); }
+
+.sub-head { display: flex; align-items: center; gap: var(--space-2); margin-block-end: var(--space-3); flex-wrap: wrap; }
+
+/* Los ficheros generados usan tabulador (como git config): se muestra a 4 columnas. */
+pre.code, .diff-line .text, .cmd .text { tab-size: 4; }
+
+/* Campos de formulario: todos los controles de una línea miden lo mismo (también los mono y los select),
+   y un texto de ayuda en un campo no estira los de su misma fila de la rejilla. */
+input.input:not([type="checkbox"]):not([type="radio"]),
+select.input { height: 32px; }
+.od-field { align-content: start; }
+/* El selector segmentado mide 32px con su borde, igual que los campos, y solo ocupa lo que sus opciones:
+   dentro de un campo (rejilla) no se estira a todo el ancho. */
+.seg-item span { min-height: 30px; line-height: 20px; }
+.od-field > .seg { justify-self: start; }
+
+/* Interruptor: la pista no se encoge cuando el texto ocupa varias líneas y queda alineada con la primera. */
+.switch { display: flex; align-items: flex-start; gap: var(--space-3); line-height: 20px; font-size: var(--text-sm); }
+.switch-track { flex: none; }
+.switch:hover .switch-track { border-color: var(--muted); }
+.switch input:checked + .switch-track::after { border-color: var(--accent); }
+
+/* Obligatorio: un asterisco discreto pegado a la etiqueta en lugar del texto. */
+label > .req { margin-inline-start: 2px; font-size: var(--text-sm); font-weight: 600; }
+
+/* Con el aviso «Sin guardar» la fila de estados puede necesitar dos líneas. */
+.profile-caps { flex-wrap: wrap; }
+.cap { white-space: nowrap; }
+
+/* Los textos .sr-only (absolutos) de las tablas no deben ensanchar la ventana: su bloque contenedor
+   es el contenedor con scroll, no el documento. Las condiciones largas se parten para caber. */
+.content, .table-wrap { position: relative; }
+.cond-list > span { overflow-wrap: anywhere; }
+
+/* Entre 1012 y 1100 px la barra lateral sigue completa y la lista + detalle no caben: se apilan antes
+   que en el prototipo para que no haya scroll horizontal (requisito del handoff). */
+@media (max-width: 1100px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+}

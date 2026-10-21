@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitProfile Manager</title>
+<style>
+/* OD-LAYOUT-PRIMITIVES v1 — structure only: display, flex/grid, overflow, wrapping, ratio.
+   Put this @layer first; product CSS outside the layer always wins. */
+@layer od-layout {
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+
+  /* containers */
+  .od-stack   { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row     { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill    { flex: 1 1 0; min-width: 0; }
+  .od-fixed   { flex: none; }
+  .od-grid    { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+
+  /* stacked information: each piece is its own line — never sibling inline spans */
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+
+  /* media keeps its intrinsic ratio by default; never a distorted or cropped
+     cover by accident. height:auto lets the ratio win over an <img height="…">
+     attribute. Cropping to a uniform box is an explicit opt-in: set --od-ratio
+     AND add .od-media-cover together (per the core rule, only where a crop is
+     deliberate — tile thumbs, decorative fills — never on full-frame content). */
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+
+  /* data text only — authored copy is rewritten to its budget instead */
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }   /* block-level reservation for a shared baseline */
+  .od-nowrap  { white-space: nowrap; }           /* 数字+单位 · 价格+起 · 日期+星期 */
+  .od-keep    { word-break: keep-all; overflow-wrap: anywhere; } /* CJK labels break at spaces / <wbr> first */
+
+  /* screen skeleton (optional): bars take their own space, the middle scrolls — no padding guessed for chrome */
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+
+  /* horizontal rail: the next item peeks at the edge; trailing room survives overflow */
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+             padding-inline: var(--od-rail-pad, 16px); scroll-padding-inline: var(--od-rail-pad, 16px); }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+  :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 16px); }
+
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch  { min-width: 44px; min-height: 44px; }
+}
+/* /OD-LAYOUT-PRIMITIVES v1 */
+</style>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<!-- ─── Icon family: single-stroke geometric, 16px grid, stroke 1.5 ─────────── -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-person" viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.75"/><path d="M2.75 14c0-2.9 2.35-4.5 5.25-4.5s5.25 1.6 5.25 4.5"/></symbol>
+    <symbol id="i-rules" viewBox="0 0 16 16"><path d="M5.5 4h8M5.5 8h8M5.5 12h8"/><circle class="f" cx="2.6" cy="4" r="1"/><circle class="f" cx="2.6" cy="8" r="1"/><circle class="f" cx="2.6" cy="12" r="1"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 16 16"><path d="M1.25 8h3L5.75 4.5l2.6 7 1.9-3.5h4.5"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 16 16"><path d="M1.75 4.5h12.5M1.75 8h12.5M1.75 11.5h12.5"/><circle class="f" cx="5" cy="4.5" r="1.6"/><circle class="f" cx="10.5" cy="8" r="1.6"/><circle class="f" cx="6.5" cy="11.5" r="1.6"/></symbol>
+    <symbol id="i-clone" viewBox="0 0 16 16"><path d="M8 1.75v7.5M4.75 6.5 8 9.75l3.25-3.25M2.75 10.5v2.25a.75.75 0 0 0 .75.75h9a.75.75 0 0 0 .75-.75V10.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.25 8.5 6.5 11.75 12.75 4.75"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.25 14.5 13.5h-13L8 2.25Z"/><path d="M8 6.25v3"/><circle class="f" cx="8" cy="11.4" r=".95"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
+    <symbol id="i-key" viewBox="0 0 16 16"><circle cx="10.5" cy="5.5" r="2.75"/><path d="M8.55 7.45 3 13v0M5.5 10.5 7 12M3.5 12.5l1.25 1.25"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 16 16"><path d="M8 1.75l5 1.6v4.15c0 3.15-2.05 5.25-5 6.75-2.95-1.5-5-3.6-5-6.75V3.35l5-1.6Z"/><path d="M5.9 7.9 7.4 9.4l2.9-3"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 16 16"><path d="M11.4 2.35l2.25 2.25-8.1 8.1H3.3v-2.25l8.1-8.1Z"/><path d="M2.5 14.75h11"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 16 16"><path d="M1.75 13.25V3.75a.5.5 0 0 1 .5-.5h3.4l1.5 1.75h6.6a.5.5 0 0 1 .5.5v7.75a.5.5 0 0 1-.5.5h-12a.5.5 0 0 1-.5-.5Z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M1.75 8h12.5M8 1.75c2 2.1 2 10.4 0 12.5M8 1.75c-2 2.1-2 10.4 0 12.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.75" y="5.75" width="8.5" height="8.5" rx="1.25"/><path d="M10.25 5.75V2.5a.75.75 0 0 0-.75-.75h-7A.75.75 0 0 0 1.75 2.5v7a.75.75 0 0 0 .75.75h3.25"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 16 16"><path d="M13.75 8a5.75 5.75 0 0 1-9.8 4.05M2.25 8a5.75 5.75 0 0 1 9.8-4.05"/><path d="M12.05 1.3v2.65H9.4M3.95 14.7v-2.65H6.6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 2.75v10.5M2.75 8h10.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.75 5h10.5M6 5V3.25h4V5"/><path d="M4.25 5l.7 8.35a.5.5 0 0 0 .5.4h5.1a.5.5 0 0 0 .5-.4L11.75 5"/></symbol>
+    <symbol id="i-duplicate" viewBox="0 0 16 16"><rect x="5.75" y="5.75" width="8.5" height="8.5" rx="1.25"/><path d="M10.25 3.5h-7.5a.75.75 0 0 0-.75.75v7.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 16 16"><path d="m8 1.9 1.85 3.85 4.25.55-3.1 2.95.8 4.2L8 11.4l-3.8 2.05.8-4.2L1.9 6.3l4.25-.55L8 1.9Z"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 16 16"><path d="m6 3.5 4.75 4.5L6 12.5"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 16 16"><path d="m3.5 6 4.5 4.75L12.5 6"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13.25V3.25M4.25 7 8 3.25 11.75 7"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 16 16"><path d="M8 2.75v10M4.25 9 8 12.75 11.75 9"/></symbol>
+    <symbol id="i-external" viewBox="0 0 16 16"><path d="M9.25 2.75h4v4M13.25 2.75 7.5 8.5"/><path d="M12 9.75v3a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.4v4"/><circle class="f" cx="8" cy="4.9" r=".95"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 16 16"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.25"/><path d="M4.75 6.5 6.6 8.35l-1.85 1.85M8.6 10.5h3.25"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.1 10.3A5.6 5.6 0 0 1 5.7 2.9a6.1 6.1 0 1 0 7.4 7.4Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.1"/><path d="M8 1.25v1.4M8 13.35v1.4M1.25 8h1.4M13.35 8h1.4M3.2 3.2l1 1M11.8 11.8l1 1M12.8 3.2l-1 1M4.2 11.8l-1 1"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.25"/><path d="m10.2 10.2 3.55 3.55"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 16 16"><path d="M6 1.75v3M10 1.75v3M3.75 4.75h8.5v2.4a4.25 4.25 0 0 1-8.5 0v-2.4ZM8 11.4v2.85"/></symbol>
+    <symbol id="i-file-code" viewBox="0 0 16 16"><path d="M3.25 1.75h5.5l3.75 3.75v8.75a.5.5 0 0 1-.5.5h-8.75a.5.5 0 0 1-.5-.5V2.25a.5.5 0 0 1 .5-.5Z"/><path d="M8.5 1.75V5.5h3.75"/><path d="M6.6 8.75 5.35 10.2 6.6 11.65M9.4 8.75l1.25 1.45-1.25 1.45"/></symbol>
+    <symbol id="i-branch" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.9"/><circle cx="4" cy="12.5" r="1.9"/><circle cx="12" cy="3.5" r="1.9"/><path d="M4 5.4v5.2M12 5.4v.85c0 2.3-1.9 3.3-4.6 3.6"/></symbol>
+    <symbol id="i-link" viewBox="0 0 16 16"><path d="m6.25 9.75 3.5-3.5M7.1 4.4 8.5 3a2.9 2.9 0 0 1 4.1 4.1l-1.4 1.4M8.9 11.6 7.5 13a2.9 2.9 0 0 1-4.1-4.1l1.4-1.4"/></symbol>
+    <symbol id="i-win-min" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
+    <symbol id="i-win-max" viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- ─── Title bar ───────────────────────────────────────────────────────── -->
+  <header class="titlebar">
+    <div class="titlebar-id">
+      <svg class="icon icon-20 titlebar-mark" aria-hidden="true"><use href="#i-branch"/></svg>
+      <span class="titlebar-name">GitProfile Manager</span>
+      <span class="titlebar-sub od-truncate">4 perfiles · integración activa</span>
+    </div>
+    <div class="titlebar-tools">
+      <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
+        <svg class="icon" aria-hidden="true"><use href="#i-moon" id="theme-icon"/></svg>
+        <span class="sr-only">Cambiar a tema oscuro</span>
+      </button>
+      <div class="window-controls" role="group" aria-label="Controles de ventana">
+        <button type="button" class="win-btn" title="Minimizar"><svg class="icon" aria-hidden="true"><use href="#i-win-min"/></svg><span class="sr-only">Minimizar</span></button>
+        <button type="button" class="win-btn" title="Maximizar"><svg class="icon" aria-hidden="true"><use href="#i-win-max"/></svg><span class="sr-only">Maximizar</span></button>
+        <button type="button" class="win-btn win-close" title="Cerrar"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="sr-only">Cerrar</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- ─── Sidebar ───────────────────────────────────────────────────────── -->
+    <nav class="sidebar" aria-label="Navegación principal">
+      <button type="button" class="btn btn-primary btn-block" data-open-clone aria-label="Smart Clone">
+        <svg class="icon" aria-hidden="true"><use href="#i-clone"/></svg>
+        <span>Smart Clone</span>
+      </button>
+
+      <ul class="nav" role="list">
+        <li><button type="button" class="nav-item" data-view="perfiles" aria-current="page" aria-label="Perfiles">
+          <svg class="icon" aria-hidden="true"><use href="#i-person"/></svg>
+          <span class="nav-label">Perfiles</span>
+          <span class="nav-count" aria-hidden="true">4</span>
+        </button></li>
+        <li><button type="button" class="nav-item" data-view="reglas" aria-label="Reglas">
+          <svg class="icon" aria-hidden="true"><use href="#i-rules"/></svg>
+          <span class="nav-label">Reglas</span>
+          <span class="nav-badge nav-badge-warn" id="nav-conflicts">1<span class="sr-only"> conflicto</span></span>
+        </button></li>
+        <li><button type="button" class="nav-item" data-view="diagnostico" aria-label="Diagnóstico">
+          <svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>
+          <span class="nav-label">Diagnóstico</span>
+        </button></li>
+        <li><button type="button" class="nav-item" data-view="ajustes" aria-label="Ajustes">
+          <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg>
+          <span class="nav-label">Ajustes</span>
+        </button></li>
+      </ul>
+
+      <div class="sidebar-foot">
+        <div class="env-line"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span class="od-truncate">Git 2.47.1</span></div>
+        <div class="env-line"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span class="od-truncate">GCM 2.6.1</span></div>
+        <div class="env-line"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span class="od-truncate">ssh-agent activo</span></div>
+      </div>
+    </nav>
+
+    <!-- ─── Content ───────────────────────────────────────────────────────── -->
+    <main class="content od-scroll" id="main" tabindex="-1">
+
+      <!-- ─────────── Vista: Perfiles ─────────── -->
+      <section class="view" id="view-perfiles" aria-labelledby="h-perfiles">
+        <div class="view-head">
+          <div class="od-fill">
+            <h1 id="h-perfiles">Perfiles</h1>
+            <p class="view-sub">Cada perfil fija identidad, clave SSH, cuenta HTTPS y firma. Git aplica el que corresponda según las reglas.</p>
+          </div>
+          <div class="od-cluster od-fixed">
+            <button type="button" class="btn btn-default" id="btn-preview-rules">
+              <svg class="icon" aria-hidden="true"><use href="#i-file-code"/></svg><span>Ver ficheros generados</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-new-profile">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Nuevo perfil</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="banner banner-warn" id="drift-banner" role="status">
+          <svg class="icon od-fixed" aria-hidden="true"><use href="#i-alert"/></svg>
+          <div class="od-fill od-stack" style="--od-gap:2px">
+            <strong>Aviso: <code>personal.gitconfig</code> se ha editado fuera de la app</strong>
+            <span class="banner-text">El hash del fichero no coincide con el registrado. Regenerarlo descartará los cambios manuales.</span>
+          </div>
+          <div class="od-cluster od-fixed">
+            <button type="button" class="btn btn-default btn-sm" data-diff="drift">Ver diferencias</button>
+            <button type="button" class="btn btn-default btn-sm" data-dismiss="drift-banner">Descartar aviso</button>
+          </div>
+        </div>
+
+        <div class="split">
+          <!-- profile list -->
+          <div class="panel panel-list">
+            <div class="panel-head od-row">
+              <span class="od-fill">Perfiles</span>
+              <span class="meta od-nowrap">orden de la lista</span>
+            </div>
+            <ul class="profile-list" id="profile-list" role="list"></ul>
+          </div>
+          <!-- profile detail -->
+          <div id="profile-detail" class="profile-detail"></div>
+        </div>
+      </section>
+
+      <!-- ─────────── Vista: Reglas ─────────── -->
+      <section class="view" id="view-reglas" aria-labelledby="h-reglas" hidden>
+        <div class="view-head">
+          <div class="od-fill">
+            <h1 id="h-reglas">Reglas</h1>
+            <p class="view-sub">Todas las reglas de todos los perfiles, en el orden en que Git las evalúa. Si varias coinciden, para cada clave gana la última.</p>
+          </div>
+          <div class="od-cluster od-fixed">
+            <button type="button" class="btn btn-default" id="btn-rules-preview">
+              <svg class="icon" aria-hidden="true"><use href="#i-file-code"/></svg><span>Vista previa de <code>rules.gitconfig</code></span>
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-new-rule">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Añadir regla</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="banner banner-warn" id="conflict-banner" role="status">
+          <svg class="icon od-fixed" aria-hidden="true"><use href="#i-alert"/></svg>
+          <div class="od-fill od-stack" style="--od-gap:2px">
+            <strong>1 conflicto detectado antes de guardar</strong>
+            <span class="banner-text">Dos perfiles con emails distintos pueden coincidir en el mismo repositorio. Revisa las filas marcadas.</span>
+          </div>
+          <button type="button" class="btn btn-default btn-sm od-fixed" id="btn-focus-conflict">Ir al conflicto</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head od-row">
+            <span class="od-fill">Orden de aplicación</span>
+            <span class="meta od-nowrap">carpeta primero · remoto después</span>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-rules">
+              <caption class="sr-only">Reglas de asignación de perfiles en orden de evaluación</caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="col-ord">#</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Condición generada</th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">Identidad resultante</th>
+                  <th scope="col" class="col-act"><span class="sr-only">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody id="rules-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── Vista: Diagnóstico ─────────── -->
+      <section class="view" id="view-diagnostico" aria-labelledby="h-diag" hidden>
+        <div class="view-head">
+          <div class="od-fill">
+            <h1 id="h-diag">Diagnóstico de repositorio</h1>
+            <p class="view-sub">Qué identidad, clave y cuenta usará Git en este repo, y de qué fichero sale cada valor.</p>
+          </div>
+          <button type="button" class="btn btn-default od-fixed" id="btn-rediagnose">
+            <svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Volver a analizar</span>
+          </button>
+        </div>
+
+        <div class="diag-top">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="dropzone-help">
+            <svg class="icon icon-24" aria-hidden="true"><use href="#i-folder"/></svg>
+            <strong>Arrastra una carpeta aquí</strong>
+            <span id="dropzone-help">o elígela en el diálogo del sistema</span>
+            <span class="btn btn-default btn-sm" aria-hidden="true">Elegir carpeta…</span>
+          </div>
+          <div class="panel">
+            <div class="panel-head">Repositorios detectados bajo carpetas con regla</div>
+            <ul class="repo-list" id="repo-list" role="list"></ul>
+          </div>
+        </div>
+
+        <div class="panel panel-current-repo">
+          <div class="panel-head od-row">
+            <svg class="icon od-fixed" aria-hidden="true"><use href="#i-folder"/></svg>
+            <span class="od-fill od-truncate" id="diag-repo-path">C:\dev\empresa-a\labs\api-gateway</span>
+            <span class="pill pill-warn od-fixed"><svg class="icon icon-12" aria-hidden="true"><use href="#i-alert"/></svg>4 problemas</span>
+          </div>
+          <div class="panel-body od-stack" style="--od-gap:20px">
+
+            <div>
+              <h2 class="h-sub">Valores efectivos</h2>
+              <p class="meta mb-8">Resultado de <code>git config --show-origin --show-scope --get &lt;clave&gt;</code>. El fichero de origen indica qué perfil se aplicó.</p>
+              <div class="table-wrap">
+                <table class="table table-values">
+                  <caption class="sr-only">Valores de configuración efectivos en el repositorio</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Clave</th>
+                      <th scope="col">Valor efectivo</th>
+                      <th scope="col">Ámbito</th>
+                      <th scope="col">Fichero de origen</th>
+                    </tr>
+                  </thead>
+                  <tbody id="diag-values"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="h-sub">Problemas detectados</h2>
+              <p class="meta mb-8">Toda corrección muestra el comando o el diff exacto antes de aplicarse.</p>
+              <ul class="problem-list" id="diag-problems" role="list"></ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── Vista: Ajustes ─────────── -->
+      <section class="view" id="view-ajustes" aria-labelledby="h-ajustes" hidden>
+        <div class="view-head">
+          <div class="od-fill">
+            <h1 id="h-ajustes">Ajustes</h1>
+            <p class="view-sub">Entorno detectado, comportamiento sin perfil aplicable y control de la integración con Git.</p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+
+          <!-- Entorno -->
+          <section class="panel" aria-labelledby="s-env">
+            <div class="panel-head" id="s-env">Entorno detectado</div>
+            <div class="panel-body od-stack" style="--od-gap:12px">
+              <div class="kv od-row">
+                <span class="od-fill od-stack" style="--od-gap:2px">
+                  <span class="kv-label">Git</span>
+                  <code class="kv-value od-truncate">C:\Program Files\Git\cmd\git.exe</code>
+                </span>
+                <span class="pill pill-ok od-fixed"><svg class="icon icon-12" aria-hidden="true"><use href="#i-check"/></svg>2.47.1</span>
+              </div>
+              <div class="kv od-row">
+                <span class="od-fill od-stack" style="--od-gap:2px">
+                  <span class="kv-label">Git Credential Manager</span>
+                  <code class="kv-value od-truncate">credential.helper = manager</code>
+                </span>
+                <span class="pill pill-ok od-fixed"><svg class="icon icon-12" aria-hidden="true"><use href="#i-check"/></svg>2.6.1</span>
+              </div>
+              <div class="kv od-row">
+                <span class="od-fill od-stack" style="--od-gap:2px">
+                  <span class="kv-label">.gitconfig global</span>
+                  <code class="kv-value od-truncate">C:\Users\Alex\.gitconfig</code>
+                </span>
+                <span class="pill pill-neutral od-fixed">incluye reglas</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Cliente SSH -->
+          <section class="panel" aria-labelledby="s-ssh">
+            <div class="panel-head" id="s-ssh">Cliente SSH</div>
+            <div class="panel-body od-stack" style="--od-gap:12px">
+              <fieldset class="choice-set">
+                <legend class="sr-only">Cliente SSH que usarán los perfiles</legend>
+                <label class="choice">
+                  <input type="radio" name="sshclient" value="win" checked>
+                  <span class="choice-body">
+                    <span class="choice-title">OpenSSH de Windows <span class="tag">Recomendado</span></span>
+                    <span class="choice-help"><code>C:/Windows/System32/OpenSSH/ssh.exe</code> · agente: servicio <code>ssh-agent</code> de Windows. Mejor opción para claves con passphrase.</span>
+                  </span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="sshclient" value="git">
+                  <span class="choice-body">
+                    <span class="choice-title">SSH incluido en Git for Windows</span>
+                    <span class="choice-help">Agente propio de la sesión de Git Bash. Para entornos sin OpenSSH de Windows.</span>
+                  </span>
+                </label>
+              </fieldset>
+              <div class="inline-status" id="agent-status">
+                <svg class="icon od-fixed" aria-hidden="true"><use href="#i-check"/></svg>
+                <span class="od-fill">Servicio <code>ssh-agent</code> en ejecución (automático)</span>
+                <button type="button" class="btn btn-default btn-sm od-fixed" id="btn-check-agent">Comprobar</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Modo sin perfil -->
+          <section class="panel" aria-labelledby="s-mode">
+            <div class="panel-head" id="s-mode">Repos sin regla aplicable</div>
+            <div class="panel-body">
+              <fieldset class="choice-set">
+                <legend class="sr-only">Comportamiento cuando ninguna regla coincide</legend>
+                <label class="choice">
+                  <input type="radio" name="nomode" value="default" checked>
+                  <span class="choice-body">
+                    <span class="choice-title">Aplicar el perfil por defecto <span class="tag">Actual</span></span>
+                    <span class="choice-help">Se incluye sin condición al principio de <code>rules.gitconfig</code>. Hoy: <strong>Personal</strong>.</span>
+                  </span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="nomode" value="strict">
+                  <span class="choice-body">
+                    <span class="choice-title">Modo estricto</span>
+                    <span class="choice-help"><code>user.useConfigOnly = true</code>: un repo sin regla no podrá commitear hasta que fijes una identidad. Evita commits con el email equivocado al precio de un error explícito.</span>
+                  </span>
+                </label>
+              </fieldset>
+            </div>
+          </section>
+
+          <!-- Apariencia -->
+          <section class="panel" aria-labelledby="s-theme">
+            <div class="panel-head" id="s-theme">Apariencia</div>
+            <div class="panel-body">
+              <div class="od-field" style="--od-gap:6px">
+                <label for="sel-theme">Tema de la aplicación</label>
+                <select id="sel-theme" class="input">
+                  <option value="light" selected>Claro</option>
+                  <option value="dark">Oscuro</option>
+                </select>
+                <span class="field-help">El tema oscuro usa su propia paleta, no una versión atenuada de la clara.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Backups -->
+          <section class="panel" aria-labelledby="s-backups">
+            <div class="panel-head" id="s-backups">Backups</div>
+            <div class="panel-body od-stack" style="--od-gap:8px">
+              <p class="meta">Antes de modificar cualquier fichero del usuario se guarda una copia con fecha en <code>%APPDATA%\GitProfileManager\backups\</code>.</p>
+              <ul class="backup-list" id="backup-list" role="list"></ul>
+            </div>
+          </section>
+
+          <!-- Primer arranque -->
+          <section class="panel" aria-labelledby="s-first">
+            <div class="panel-head" id="s-first">Primer arranque</div>
+            <div class="panel-body od-stack" style="--od-gap:10px">
+              <p class="meta">Detecta el entorno, convierte la identidad global en perfil por defecto y muestra los cambios antes de activar nada.</p>
+              <div class="od-cluster">
+                <button type="button" class="btn btn-default" data-open-onboarding>
+                  <svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Ejecutar el asistente</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Integración -->
+          <section class="panel panel-danger" aria-labelledby="s-int">
+            <div class="panel-head" id="s-int">Integración con Git</div>
+            <div class="panel-body od-stack" style="--od-gap:12px">
+              <div class="inline-status">
+                <svg class="icon od-fixed" aria-hidden="true"><use href="#i-check"/></svg>
+                <span class="od-fill">Activa: <code>~/.gitconfig</code> incluye <code>rules.gitconfig</code> y <code>~/.ssh/config</code> incluye <code>gitprofile.conf</code>.</span>
+              </div>
+              <p class="meta">Al desactivar se retiran esas dos líneas de inclusión y se restaura la identidad global guardada. Las claves SSH nunca se borran.</p>
+              <div class="od-cluster">
+                <button type="button" class="btn btn-danger" data-diff="deactivate">
+                  <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span>Desactivar integración…</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ─── Status bar ───────────────────────────────────────────────────────── -->
+  <footer class="statusbar">
+    <span class="od-row od-fixed"><svg class="icon icon-12" aria-hidden="true"><use href="#i-check"/></svg>Integración activa</span>
+    <span class="sep" aria-hidden="true">·</span>
+    <span class="od-truncate" id="status-msg">Último guardado: hoy 09:41 · 4 ficheros regenerados</span>
+    <span class="od-fill"></span>
+    <span class="od-nowrap od-fixed">~/.gitprofiles</span>
+  </footer>
+</div>
+
+<!-- ─── Smart Clone ──────────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay-clone" hidden>
+  <div class="scrim" data-close-overlay></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clone-title">
+    <header class="modal-head">
+      <svg class="icon icon-20 od-fixed" aria-hidden="true"><use href="#i-clone"/></svg>
+      <h2 id="clone-title" class="od-fill">Smart Clone</h2>
+      <button type="button" class="icon-btn od-fixed" data-close-overlay><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="sr-only">Cerrar</span></button>
+    </header>
+    <div class="modal-body od-stack" style="--od-gap:16px">
+
+      <div class="od-field" style="--od-gap:6px">
+        <label for="clone-url">URL del repositorio <span class="req">obligatorio</span></label>
+        <input id="clone-url" class="input input-mono" type="text" value="git@github.com:empresa-a/api-gateway.git"
+               aria-describedby="clone-url-help clone-url-err" autocomplete="off">
+        <span id="clone-url-help" class="field-help">Se acepta <code>git@host:org/repo.git</code> o <code>https://host/org/repo.git</code>, con o sin <code>.git</code>. Precargada desde el portapapeles.</span>
+        <span id="clone-url-err" class="field-err" hidden></span>
+      </div>
+
+      <div class="parsed" id="clone-parsed">
+        <div class="od-stat"><span class="parsed-k">Host</span><code class="parsed-v od-truncate" id="p-host">github.com</code></div>
+        <div class="od-stat"><span class="parsed-k">Organización</span><code class="parsed-v od-truncate" id="p-org">empresa-a</code></div>
+        <div class="od-stat"><span class="parsed-k">Repositorio</span><code class="parsed-v od-truncate" id="p-repo">api-gateway</code></div>
+      </div>
+
+      <div class="form-2">
+        <div class="od-field" style="--od-gap:6px">
+          <label for="clone-profile">Perfil</label>
+          <select id="clone-profile" class="input" aria-describedby="clone-profile-help"></select>
+          <span id="clone-profile-help" class="field-help" data-matched>Preseleccionado: una regla de organización coincide con esta URL.</span>
+        </div>
+        <div class="od-field" style="--od-gap:6px">
+          <span class="label-like" id="clone-method-label">Método</span>
+          <div class="seg" role="radiogroup" aria-labelledby="clone-method-label">
+            <label class="seg-item"><input type="radio" name="clonemethod" value="ssh" checked><span>SSH</span></label>
+            <label class="seg-item"><input type="radio" name="clonemethod" value="https"><span>HTTPS</span></label>
+          </div>
+          <span class="field-help">Valor por defecto del perfil. La URL remota queda canónica.</span>
+        </div>
+      </div>
+
+      <div class="od-field" style="--od-gap:6px">
+        <label for="clone-dest">Carpeta destino</label>
+        <div class="od-row" style="--od-gap:8px">
+          <input id="clone-dest" class="input input-mono od-fill" type="text" value="C:\dev\empresa-a\api-gateway">
+          <button type="button" class="btn btn-default od-fixed">Examinar…</button>
+        </div>
+        <span class="field-help">Preseleccionada con la carpeta de la regla del perfil.</span>
+      </div>
+
+      <div class="od-field" style="--od-gap:6px">
+        <span class="label-like">Comando que se ejecutará</span>
+        <pre class="code code-wrap" id="clone-cmd"></pre>
+      </div>
+
+      <div class="banner banner-ok" id="clone-coverage">
+        <svg class="icon od-fixed" aria-hidden="true"><use href="#i-check"/></svg>
+        <div class="od-fill od-stack" style="--od-gap:2px">
+          <strong>Tras clonar, el repo quedará cubierto por una regla</strong>
+          <span class="banner-text">Coincide la regla de carpeta <code>gitdir/i:C:/dev/empresa-a/</code> del perfil Trabajo — Empresa A.</span>
+        </div>
+      </div>
+
+      <div class="clone-progress" id="clone-progress" hidden aria-live="polite">
+        <div class="progress"><div class="progress-bar" id="clone-bar"></div></div>
+        <span id="clone-step">Normalizando la URL…</span>
+      </div>
+
+      <div class="banner banner-ok" id="clone-done" hidden>
+        <svg class="icon od-fixed" aria-hidden="true"><use href="#i-check"/></svg>
+        <div class="od-fill od-stack" style="--od-gap:2px">
+          <strong>Clonado y diagnosticado</strong>
+          <span class="banner-text">Identidad de Trabajo — Empresa A aplicada por regla de carpeta. Sin configuración local que la pise.</span>
+        </div>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <div class="od-fill meta">No se altera la URL remota: sin alias SSH ni usuario incrustado.</div>
+      <button type="button" class="btn btn-default" data-close-overlay>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btn-do-clone">
+        <svg class="icon" aria-hidden="true"><use href="#i-clone"/></svg><span>Clonar</span>
+      </button>
+    </footer>
+  </div>
+</div>
+
+<!-- ─── Diff / confirm ───────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay-diff" hidden>
+  <div class="scrim" data-close-overlay></div>
+  <div class="modal modal-md" role="dialog" aria-modal="true" aria-labelledby="diff-title">
+    <header class="modal-head">
+      <svg class="icon icon-20 od-fixed" aria-hidden="true"><use href="#i-file-code"/></svg>
+      <h2 id="diff-title" class="od-fill">Cambio propuesto</h2>
+      <button type="button" class="icon-btn od-fixed" data-close-overlay><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="sr-only">Cerrar</span></button>
+    </header>
+    <div class="modal-body od-stack" style="--od-gap:14px" id="diff-body"></div>
+    <footer class="modal-foot">
+      <div class="od-fill meta" id="diff-note">Se guardará una copia de seguridad antes de escribir.</div>
+      <button type="button" class="btn btn-default" data-close-overlay>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btn-apply-diff">Aplicar cambio</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ─── Primer arranque ──────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay-onboarding" hidden>
+  <div class="scrim" data-close-overlay></div>
+  <div class="modal modal-md" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+    <header class="modal-head">
+      <svg class="icon icon-20 od-fixed" aria-hidden="true"><use href="#i-branch"/></svg>
+      <h2 id="ob-title" class="od-fill">Primer arranque</h2>
+      <button type="button" class="icon-btn od-fixed" data-close-overlay><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="sr-only">Cerrar</span></button>
+    </header>
+
+    <ol class="steps" id="ob-steps">
+      <li class="step is-current" data-step="1"><span class="step-n">1</span><span class="step-t">Entorno</span></li>
+      <li class="step" data-step="2"><span class="step-n">2</span><span class="step-t">Identidad global</span></li>
+      <li class="step" data-step="3"><span class="step-n">3</span><span class="step-t">Activar</span></li>
+    </ol>
+
+    <div class="modal-body" id="ob-body"></div>
+
+    <footer class="modal-foot">
+      <div class="od-fill meta" id="ob-note">Nada se escribe hasta el último paso.</div>
+      <button type="button" class="btn btn-default" id="ob-back" disabled>Atrás</button>
+      <button type="button" class="btn btn-primary" id="ob-next">Continuar</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

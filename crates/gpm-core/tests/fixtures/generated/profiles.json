@@ -1,0 +1,95 @@
+{
+  "SchemaVersion": 1,
+  "Profiles": [
+    {
+      "Id": "11111111-1111-1111-1111-111111111111",
+      "DisplayName": "Personal",
+      "Slug": "personal",
+      "Provider": "GitHub",
+      "Host": "github.com",
+      "GitUserName": "Juan",
+      "GitUserEmail": "juan@personal.dev",
+      "SshKeyPath": "~/.ssh/id_ed25519_personal",
+      "HttpsUsername": "juan-personal",
+      "HttpsCheckRepoUrl": null,
+      "Signing": "Ssh",
+      "SigningKey": "~/.ssh/id_ed25519_personal.pub",
+      "Rules": [],
+      "IsDefault": true,
+      "PreferredCloneMethod": "Ssh"
+    },
+    {
+      "Id": "22222222-2222-2222-2222-222222222222",
+      "DisplayName": "Trabajo — Empresa A; \"core\" #1",
+      "Slug": "trabajo",
+      "Provider": "GitHub",
+      "Host": "github.com",
+      "GitUserName": "Juan Pérez ",
+      "GitUserEmail": "juan@empresa-a.com",
+      "SshKeyPath": "~/.ssh/id ed25519 trabajo",
+      "HttpsUsername": "juan-empresa",
+      "HttpsCheckRepoUrl": null,
+      "Signing": "None",
+      "SigningKey": null,
+      "Rules": [
+        {
+          "Id": "33333333-3333-3333-3333-333333333333",
+          "Type": "Folder",
+          "Value": "C:\\dev\\empresa-a",
+          "Host": null,
+          "Order": 2
+        },
+        {
+          "Id": "44444444-4444-4444-4444-444444444444",
+          "Type": "Remote",
+          "Value": "empresa-a/",
+          "Host": null,
+          "Order": 0
+        },
+        {
+          "Id": "55555555-5555-5555-5555-555555555555",
+          "Type": "Remote",
+          "Value": "grupo/sub",
+          "Host": "gitlab.corp.local",
+          "Order": 1
+        }
+      ],
+      "IsDefault": false,
+      "PreferredCloneMethod": "Ssh"
+    },
+    {
+      "Id": "66666666-6666-6666-6666-666666666666",
+      "DisplayName": "Cliente B",
+      "Slug": "cliente-b",
+      "Provider": "GitLab",
+      "Host": "gitlab.com",
+      "GitUserName": "Juan",
+      "GitUserEmail": "juan@cliente-b.io",
+      "SshKeyPath": null,
+      "HttpsUsername": null,
+      "HttpsCheckRepoUrl": null,
+      "Signing": "Gpg",
+      "SigningKey": "ABCDEF0123456789",
+      "Rules": [
+        {
+          "Id": "77777777-7777-7777-7777-777777777777",
+          "Type": "Folder",
+          "Value": "~/clientes/b",
+          "Host": null,
+          "Order": 3
+        }
+      ],
+      "IsDefault": false,
+      "PreferredCloneMethod": "Https"
+    }
+  ],
+  "Settings": {
+    "SshClient": "WindowsOpenSsh",
+    "NoProfileMode": "DefaultProfile",
+    "GenerateSshAliases": true
+  },
+  "FileHashes": {},
+  "IntegrationEnabled": false,
+  "FirstRunCompleted": false,
+  "SavedGlobalIdentity": null
+}

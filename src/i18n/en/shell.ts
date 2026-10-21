@@ -1,0 +1,63 @@
+import type { shell as es } from "../es/shell";
+import type { Messages } from "../types";
+
+export const shell: Messages<typeof es> = {
+  profiles_one: "{{count}} profile",
+  profiles_other: "{{count}} profiles",
+  unsaved: " · {{count}} unsaved",
+  integrationOn: " · integration on",
+  integrationOff: " · integration off",
+  lightTheme: "Light theme",
+  darkTheme: "Dark theme",
+  toLight: "Switch to light theme",
+  toDark: "Switch to dark theme",
+  windowControls: "Window controls",
+  minimize: "Minimize",
+  maximize: "Maximize",
+  mainNav: "Main navigation",
+  nav: {
+    perfiles: "Profiles",
+    reglas: "Rules",
+    diagnostico: "Diagnostics",
+    ajustes: "Settings",
+  },
+  conflicts_one: "conflict",
+  conflicts_other: "conflicts",
+  env: {
+    gitMissing: "Git not found",
+    gcmMissing: "GCM not installed",
+    agentRunning: "ssh-agent running",
+    agentDisabled: "ssh-agent disabled",
+    agentNotInstalled: "ssh-agent not installed",
+    agentStopped: "ssh-agent stopped",
+  },
+  status: {
+    lastSaved: "Last saved: {{date}} {{time}}",
+    noneSaved: "No profiles saved yet",
+    active: "Integration on",
+    inactive: "Integration off",
+  },
+  banners: {
+    regenerateFiles_one: "Regenerate {{file}}",
+    regenerateFiles_other: "Regenerate {{count}} files",
+    regenerateNote: "Lines marked − will be lost and the app will write the lines marked +.",
+    regenerateWarn: "Regenerating discards manual edits.",
+    regenerateNow: "Regenerate now",
+    regenerated: "Files regenerated",
+    requirements: "Requirements not met",
+    missingInclude: "Include line missing",
+    missingIncludeText:
+      "The integration is on but the include is missing from {{files}}. Turn it on again in Settings.",
+    and: " and ",
+    goSettings: "Go to Settings",
+    dismiss: "Dismiss",
+    integrationOff: "Integration off",
+    integrationOffText: "Git isn't using the profiles. Turn the integration on in Settings.",
+    driftOne: "Warning: <code>{{file}}</code> was edited outside the app",
+    driftMany: "Warning: {{count}} generated files were edited outside the app",
+    driftOneText:
+      "The file hash doesn't match the recorded one. Regenerating it will discard the manual changes.",
+    driftManyText: "{{files}}. Regenerating them will discard the manual changes.",
+    showDiff: "Show differences",
+  },
+};

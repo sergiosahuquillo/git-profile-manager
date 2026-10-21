@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.ico binary
+*.png binary
+# Salida esperada del generador: se compara byte a byte (incluido el CRLF de ssh-keygen.cmd).
+crates/gpm-core/tests/fixtures/** -text

@@ -1,0 +1,145 @@
+{
+  "meta": {
+    "title": "GitProfile Manager · The right Git identity in every repository",
+    "description": "Free Windows app that makes Git use the right name, email, SSH key, HTTPS account and signature in every repository, on its own."
+  },
+  "nav": {
+    "skip": "Skip to content",
+    "features": "Features",
+    "how": "How it works",
+    "faq": "FAQ",
+    "github": "GitHub",
+    "language": "Español",
+    "languageLabel": "Cambiar a español",
+    "theme": "Switch between light and dark mode",
+    "home": "GitProfile Manager, home"
+  },
+  "hero": {
+    "eyebrow": "Free and open source · Windows 10 and 11",
+    "title": "The right Git identity in <span class=\"accent\">every repository</span>",
+    "lead": "Set up your personal, work and client accounts once. Git picks the right name, email, SSH key, HTTPS account and signature for each repo on its own: on the command line, in your editor and in SourceTree.",
+    "download": "Download for Windows",
+    "version": "Version {{version}} · {{size}} MB",
+    "versionFallback": "Latest release on GitHub",
+    "source": "View on GitHub",
+    "shotAlt": "GitProfile Manager showing four profiles and the identity of the default one"
+  },
+  "problems": {
+    "title": "Sound familiar?",
+    "p1": {
+      "title": "Commits with the wrong email",
+      "text": "You push to the client's repo and the history shows your personal address. Or the other way round."
+    },
+    "p2": {
+      "title": "Push rejected",
+      "text": "Git offers the SSH key from another account and the server says you don't have access."
+    },
+    "p3": {
+      "title": "Credential pop-ups",
+      "text": "Two accounts on the same provider, and Git keeps asking which one to use, or picks the wrong one."
+    }
+  },
+  "how": {
+    "title": "How it works",
+    "lead": "No agent running in the background and no magic: the app writes standard Git configuration and Git does the rest.",
+    "s1": {
+      "title": "Create a profile per account",
+      "text": "Name and email, SSH key, HTTPS account and how commits are signed. GitHub, GitLab, Bitbucket, Azure DevOps or your own server."
+    },
+    "s2": {
+      "title": "Tell it where each one applies",
+      "text": "<em>Repos in this folder</em> or <em>repos from this organization</em> use this profile. Everything else uses your default one."
+    },
+    "s3": {
+      "title": "Git applies it on its own",
+      "text": "On every commit, fetch and push, in existing repos too. You can close the app, or even uninstall it, and everything keeps working."
+    },
+    "codeCaption": "What the app writes: plain Git configuration you can read and edit by hand."
+  },
+  "features": {
+    "title": "Everything an identity needs",
+    "lead": "From the first SSH key to the last commit, with a preview before every change.",
+    "rules": {
+      "title": "Rules that decide for you",
+      "text": "A rule says <em>“repos in this folder”</em> or <em>“repos from this organization”</em> use this profile. The app warns you when two rules could clash, and tells you which one wins.",
+      "alt": "The rules view, with a conflict between two nested folders highlighted"
+    },
+    "diagnostics": {
+      "title": "Why is Git using that email?",
+      "text": "Point it at any repo and it shows which profile applies, the value Git will actually use for each setting and the file it comes from. It spots the usual problems and fixes them for you.",
+      "alt": "Diagnostics of a repository, with its applied profile and effective values"
+    },
+    "clone": {
+      "title": "Smart Clone",
+      "text": "Paste a repository URL and the app picks the profile, the method (SSH or HTTPS) and the folder, shows you the exact command, and tells you whether a rule will cover the new repo.",
+      "alt": "Smart Clone with a URL filled in and the profile picked from an organization rule"
+    },
+    "files": {
+      "title": "No magic, just Git configuration",
+      "text": "Everything the app writes is standard Git and OpenSSH configuration. In your own <code>.gitconfig</code> and <code>~/.ssh/config</code> it adds a single line each, after a backup.",
+      "alt": "The generated files, readable Git configuration"
+    },
+    "more": {
+      "ssh": {
+        "title": "SSH keys made easy",
+        "text": "Create a key, add it to the agent, copy the public key and test the connection, from the profile."
+      },
+      "signing": {
+        "title": "Signed commits",
+        "text": "With your SSH key or with GPG, so your commits get the Verified badge."
+      },
+      "https": {
+        "title": "HTTPS without passwords in the app",
+        "text": "Sign-ins go through Git Credential Manager and live in Windows Credential Manager."
+      },
+      "preview": {
+        "title": "See it before it happens",
+        "text": "Every save shows the exact diff or command first. Nothing is written until you confirm."
+      },
+      "backups": {
+        "title": "Backups of every change",
+        "text": "Dated backups of your files, restorable in one click from Settings."
+      },
+      "sourcetree": {
+        "title": "Plays well with SourceTree",
+        "text": "It detects SourceTree's settings and tells you what to change so it uses your profiles too."
+      }
+    }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "q1": {
+      "q": "Does it change my global Git configuration?",
+      "a": "Barely. It adds one include line to your <code>.gitconfig</code> and one to <code>~/.ssh/config</code>, after a backup. Everything else lives in its own files. Your global name and email are only touched if you choose to in the first-run wizard, and they're saved first."
+    },
+    "q2": {
+      "q": "Does the app need to stay open?",
+      "a": "No. Git reads the configuration the app wrote, so the app is only for setting things up. It doesn't start with Windows."
+    },
+    "q3": {
+      "q": "Will it delete or change my SSH keys?",
+      "a": "Never. It can create new keys and fix the permissions of an existing one if you ask it to, but it never deletes keys, not even when you remove the app."
+    },
+    "q4": {
+      "q": "Windows says “Windows protected your PC”. Is it safe?",
+      "a": "The installer isn't code-signed yet, so SmartScreen warns the first time. Click <strong>More info</strong> → <strong>Run anyway</strong>. The source code is public and every installer is built on GitHub from it."
+    },
+    "q5": {
+      "q": "What do I need to install first?",
+      "a": "Windows 10 (22H2) or Windows 11, and <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 or later, which includes Git Credential Manager. The installer is per user and doesn't need administrator rights."
+    },
+    "q6": {
+      "q": "Does it work on macOS or Linux?",
+      "a": "No, it's Windows-only: it relies on the Windows SSH agent, Windows Credential Manager and Windows file permissions."
+    }
+  },
+  "cta": {
+    "title": "Stop thinking about which account you're using",
+    "text": "Free, open source and installed in a minute."
+  },
+  "footer": {
+    "license": "Free software under the <a href=\"https://github.com/sergiosahuquillo/git-profile-manager/blob/main/LICENSE\">GPL-3.0</a>.",
+    "releases": "Releases",
+    "issues": "Report a problem"
+  }
+}

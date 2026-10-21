@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Título, descripción y Open Graph van fijos en inglés porque los buscadores y las vistas previas
+       de enlaces no ejecutan JavaScript. app.js los sustituye por los del idioma elegido. -->
+  <title>GitProfile Manager · The right Git identity in every repository</title>
+  <meta name="description" content="Free Windows app that makes Git use the right name, email, SSH key, HTTPS account and signature in every repository, on its own." />
+  <link rel="canonical" href="https://sergiosahuquillo.github.io/git-profile-manager/" />
+  <link rel="icon" type="image/png" href="shots/logo.png" />
+  <meta name="theme-color" content="#0d1117" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GitProfile Manager" />
+  <meta property="og:title" content="GitProfile Manager · The right Git identity in every repository" />
+  <meta property="og:description" content="Free Windows app that makes Git use the right name, email, SSH key, HTTPS account and signature in every repository, on its own." />
+  <meta property="og:url" content="https://sergiosahuquillo.github.io/git-profile-manager/" />
+  <meta property="og:image" content="https://sergiosahuquillo.github.io/git-profile-manager/shots/screenshot-profiles.png" />
+  <meta property="og:image:width" content="1366" />
+  <meta property="og:image:height" content="860" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Antes de pintar: tema guardado o el del sistema, para que no parpadee. -->
+  <script>
+    try {
+      var t = localStorage.getItem("gpm-site-theme");
+      document.documentElement.dataset.theme =
+        t || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    } catch (e) {
+      document.documentElement.dataset.theme = "dark";
+    }
+    // Oculta la página hasta que app.js pone los textos; si app.js no llega, se muestra igualmente.
+    document.documentElement.classList.add("i18n-pending");
+    setTimeout(function () { document.documentElement.classList.remove("i18n-pending"); }, 3000);
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="nav.skip"></a>
+
+  <noscript>
+    <p class="noscript">
+      This page needs JavaScript to show its text · Esta página necesita JavaScript para mostrar sus textos:
+      <a href="https://github.com/sergiosahuquillo/git-profile-manager">github.com/sergiosahuquillo/git-profile-manager</a>
+    </p>
+  </noscript>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#top" data-i18n-attr="aria-label:nav.home">
+        <img src="shots/logo.png" width="28" height="28" alt="" />
+        <span>GitProfile Manager</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#how" data-i18n="nav.how"></a>
+        <a href="#features" data-i18n="nav.features"></a>
+        <a href="#faq" data-i18n="nav.faq"></a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="btn-icon lang" type="button" id="lang-toggle" data-i18n="nav.language" data-i18n-attr="aria-label:nav.languageLabel"></button>
+        <button class="btn-icon" type="button" id="theme-toggle" data-i18n-attr="aria-label:nav.theme;title:nav.theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <a class="btn-icon" href="https://github.com/sergiosahuquillo/git-profile-manager" data-i18n-attr="aria-label:nav.github;title:nav.github">
+          <svg class="icon-fill" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap hero-inner">
+        <p class="eyebrow" data-i18n="hero.eyebrow"></p>
+        <h1 data-i18n-html="hero.title"></h1>
+        <p class="lead" data-i18n="hero.lead"></p>
+        <div class="cta-row">
+          <a class="btn btn-primary download" href="https://github.com/sergiosahuquillo/git-profile-manager/releases/latest">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            <span data-i18n="hero.download"></span>
+          </a>
+          <a class="btn btn-secondary" href="https://github.com/sergiosahuquillo/git-profile-manager">
+            <svg class="icon-fill" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+            <span data-i18n="hero.source"></span>
+          </a>
+        </div>
+        <p class="version" data-version data-i18n="hero.versionFallback"></p>
+      </div>
+      <div class="wrap">
+        <figure class="window hero-shot">
+          <img class="only-dark" src="shots/screenshot-profiles.png" width="1366" height="860" data-i18n-attr="alt:hero.shotAlt" />
+          <img class="only-light" src="shots/screenshot-profiles-light.png" width="1366" height="860" data-i18n-attr="alt:hero.shotAlt" />
+        </figure>
+      </div>
+    </section>
+
+    <section class="section problems" aria-labelledby="problems-title">
+      <div class="wrap">
+        <h2 id="problems-title" data-i18n="problems.title"></h2>
+        <div class="grid-3">
+          <article class="card">
+            <span class="card-icon tone-danger"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+            <h3 data-i18n="problems.p1.title"></h3>
+            <p data-i18n="problems.p1.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon tone-danger"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.7 5.7l12.6 12.6"/></svg></span>
+            <h3 data-i18n="problems.p2.title"></h3>
+            <p data-i18n="problems.p2.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon tone-danger"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <h3 data-i18n="problems.p3.title"></h3>
+            <p data-i18n="problems.p3.text"></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section how" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="how-title" data-i18n="how.title"></h2>
+          <p data-i18n="how.lead"></p>
+        </div>
+        <div class="how-grid">
+          <ol class="steps">
+            <li>
+              <span class="step-n">1</span>
+              <div>
+                <h3 data-i18n="how.s1.title"></h3>
+                <p data-i18n="how.s1.text"></p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">2</span>
+              <div>
+                <h3 data-i18n="how.s2.title"></h3>
+                <p data-i18n-html="how.s2.text"></p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">3</span>
+              <div>
+                <h3 data-i18n="how.s3.title"></h3>
+                <p data-i18n="how.s3.text"></p>
+              </div>
+            </li>
+          </ol>
+          <figure class="code-window">
+            <div class="code-bar"><span></span><span></span><span></span><code>~/.gitprofiles/rules.gitconfig</code></div>
+<pre><code><span class="c"># Generated by GitProfile Manager. Do not edit by hand.</span>
+<span class="c"># Default profile: applies to every repo without a rule.</span>
+<span class="k">[include]</span>
+    path = personal.gitconfig
+
+<span class="c"># Rules: evaluated afterwards, they override the default profile.</span>
+<span class="k">[includeIf <span class="s">"gitdir/i:C:/dev/company-a/"</span>]</span>
+    path = work.gitconfig
+<span class="k">[includeIf <span class="s">"hasconfig:remote.*.url:git@github.com:company-a/**"</span>]</span>
+    path = work.gitconfig</code></pre>
+            <figcaption data-i18n="how.codeCaption"></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section features" id="features" aria-labelledby="features-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="features-title" data-i18n="features.title"></h2>
+          <p data-i18n="features.lead"></p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-text">
+            <h3 data-i18n="features.rules.title"></h3>
+            <p data-i18n-html="features.rules.text"></p>
+          </div>
+          <figure class="window">
+            <img class="only-dark" src="shots/screenshot-rules.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
+            <img class="only-light" src="shots/screenshot-rules-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
+          </figure>
+        </div>
+
+        <div class="feature reverse">
+          <div class="feature-text">
+            <h3 data-i18n="features.diagnostics.title"></h3>
+            <p data-i18n="features.diagnostics.text"></p>
+          </div>
+          <figure class="window">
+            <img class="only-dark" src="shots/screenshot-diagnostics.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
+            <img class="only-light" src="shots/screenshot-diagnostics-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
+          </figure>
+        </div>
+
+        <div class="feature">
+          <div class="feature-text">
+            <h3 data-i18n="features.clone.title"></h3>
+            <p data-i18n="features.clone.text"></p>
+          </div>
+          <figure class="window">
+            <img class="only-dark" src="shots/screenshot-clone.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
+            <img class="only-light" src="shots/screenshot-clone-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
+          </figure>
+        </div>
+
+        <div class="feature reverse">
+          <div class="feature-text">
+            <h3 data-i18n="features.files.title"></h3>
+            <p data-i18n-html="features.files.text"></p>
+          </div>
+          <figure class="window">
+            <img class="only-dark" src="shots/screenshot-generated.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.files.alt" />
+            <img class="only-light" src="shots/screenshot-generated-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.files.alt" />
+          </figure>
+        </div>
+
+        <div class="grid-3 more">
+          <article class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.2-8.2M16 7l3 3M14 9l2 2"/></svg></span>
+            <h3 data-i18n="features.more.ssh.title"></h3>
+            <p data-i18n="features.more.ssh.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon tone-success"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></span>
+            <h3 data-i18n="features.more.signing.title"></h3>
+            <p data-i18n="features.more.signing.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>
+            <h3 data-i18n="features.more.https.title"></h3>
+            <p data-i18n="features.more.https.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <h3 data-i18n="features.more.preview.title"></h3>
+            <p data-i18n="features.more.preview.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span>
+            <h3 data-i18n="features.more.backups.title"></h3>
+            <p data-i18n="features.more.backups.text"></p>
+          </article>
+          <article class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 4-4 4-9.5 6"/></svg></span>
+            <h3 data-i18n="features.more.sourcetree.title"></h3>
+            <p data-i18n="features.more.sourcetree.text"></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq" id="faq" aria-labelledby="faq-title">
+      <div class="wrap wrap-narrow">
+        <h2 id="faq-title" data-i18n="faq.title"></h2>
+        <details><summary data-i18n="faq.q1.q"></summary><p data-i18n-html="faq.q1.a"></p></details>
+        <details><summary data-i18n="faq.q2.q"></summary><p data-i18n-html="faq.q2.a"></p></details>
+        <details><summary data-i18n="faq.q3.q"></summary><p data-i18n-html="faq.q3.a"></p></details>
+        <details><summary data-i18n="faq.q4.q"></summary><p data-i18n-html="faq.q4.a"></p></details>
+        <details><summary data-i18n="faq.q5.q"></summary><p data-i18n-html="faq.q5.a"></p></details>
+        <details><summary data-i18n="faq.q6.q"></summary><p data-i18n-html="faq.q6.a"></p></details>
+      </div>
+    </section>
+
+    <section class="section final" aria-labelledby="final-title">
+      <div class="wrap final-inner">
+        <img src="shots/logo.png" width="64" height="64" alt="" />
+        <h2 id="final-title" data-i18n="cta.title"></h2>
+        <p data-i18n="cta.text"></p>
+        <a class="btn btn-primary download" href="https://github.com/sergiosahuquillo/git-profile-manager/releases/latest">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          <span data-i18n="hero.download"></span>
+        </a>
+        <p class="version" data-version data-i18n="hero.versionFallback"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p><strong>GitProfile Manager</strong> · <span data-i18n-html="footer.license"></span></p>
+      <nav aria-label="Links">
+        <a href="https://github.com/sergiosahuquillo/git-profile-manager/releases" data-i18n="footer.releases"></a>
+        <a href="https://github.com/sergiosahuquillo/git-profile-manager/issues" data-i18n="footer.issues"></a>
+        <a href="https://github.com/sergiosahuquillo/git-profile-manager" data-i18n="nav.github"></a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

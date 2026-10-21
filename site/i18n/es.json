@@ -1,0 +1,145 @@
+{
+  "meta": {
+    "title": "GitProfile Manager · La identidad de Git correcta en cada repositorio",
+    "description": "App gratuita para Windows que hace que Git use el nombre, el email, la clave SSH, la cuenta HTTPS y la firma correctos en cada repositorio, sin que tengas que pensarlo."
+  },
+  "nav": {
+    "skip": "Saltar al contenido",
+    "features": "Funciones",
+    "how": "Cómo funciona",
+    "faq": "Preguntas",
+    "github": "GitHub",
+    "language": "English",
+    "languageLabel": "Switch to English",
+    "theme": "Cambiar entre modo claro y oscuro",
+    "home": "GitProfile Manager, inicio"
+  },
+  "hero": {
+    "eyebrow": "Gratis y de código abierto · Windows 10 y 11",
+    "title": "La identidad de Git correcta en <span class=\"accent\">cada repositorio</span>",
+    "lead": "Configura una vez tu cuenta personal, del trabajo y de clientes. Git elige automáticamente el nombre, el email, la clave SSH, la cuenta HTTPS y la firma de cada repo: en la línea de comandos, en tu editor y en SourceTree.",
+    "download": "Descargar para Windows",
+    "version": "Versión {{version}} · {{size}} MB",
+    "versionFallback": "Última versión en GitHub",
+    "source": "Ver en GitHub",
+    "shotAlt": "GitProfile Manager con cuatro perfiles y la identidad del perfil por defecto"
+  },
+  "problems": {
+    "title": "¿Te suena?",
+    "p1": {
+      "title": "Commits con el email equivocado",
+      "text": "Subes al repo del cliente y en el historial aparece tu dirección personal. O al revés."
+    },
+    "p2": {
+      "title": "Push rechazado",
+      "text": "Git ofrece la clave SSH de otra cuenta y el servidor dice que no tienes acceso."
+    },
+    "p3": {
+      "title": "Ventanas de credenciales",
+      "text": "Dos cuentas en el mismo proveedor, y Git no para de preguntar cuál usar, o elige la que no es."
+    }
+  },
+  "how": {
+    "title": "Cómo funciona",
+    "lead": "Sin procesos en segundo plano y sin magia: la app escribe configuración estándar de Git y Git hace el resto.",
+    "s1": {
+      "title": "Crea un perfil por cuenta",
+      "text": "Nombre y email, clave SSH, cuenta HTTPS y cómo se firman los commits. GitHub, GitLab, Bitbucket, Azure DevOps o tu propio servidor."
+    },
+    "s2": {
+      "title": "Dile dónde se aplica cada uno",
+      "text": "<em>Los repos de esta carpeta</em> o <em>los repos de esta organización</em> usan este perfil. Todo lo demás usa tu perfil por defecto."
+    },
+    "s3": {
+      "title": "Git lo aplica solo",
+      "text": "En cada commit, fetch y push, también en los repos que ya tenías. Puedes cerrar la app, o incluso desinstalarla, y todo sigue funcionando."
+    },
+    "codeCaption": "Lo que escribe la app: configuración de Git normal, que puedes leer y editar a mano."
+  },
+  "features": {
+    "title": "Todo lo que necesita una identidad",
+    "lead": "De la primera clave SSH al último commit, con una vista previa antes de cada cambio.",
+    "rules": {
+      "title": "Reglas que deciden por ti",
+      "text": "Una regla dice que <em>«los repos de esta carpeta»</em> o <em>«los repos de esta organización»</em> usan este perfil. La app avisa cuando dos reglas pueden chocar y te dice cuál gana.",
+      "alt": "La vista de reglas, con un conflicto resaltado entre dos carpetas anidadas"
+    },
+    "diagnostics": {
+      "title": "¿Por qué Git usa ese email?",
+      "text": "Elige cualquier repo y verás qué perfil se aplica, el valor que Git usará de verdad para cada ajuste y el fichero del que sale. Detecta los problemas habituales y los corrige por ti.",
+      "alt": "Diagnóstico de un repositorio, con su perfil aplicado y sus valores efectivos"
+    },
+    "clone": {
+      "title": "Smart Clone",
+      "text": "Pega la URL de un repositorio y la app elige el perfil, el método (SSH o HTTPS) y la carpeta, te enseña el comando exacto y te dice si una regla cubrirá el repo nuevo.",
+      "alt": "Smart Clone con una URL y el perfil elegido por una regla de organización"
+    },
+    "files": {
+      "title": "Sin magia, solo configuración de Git",
+      "text": "Todo lo que escribe la app es configuración estándar de Git y OpenSSH. En tu <code>.gitconfig</code> y en tu <code>~/.ssh/config</code> añade una sola línea en cada uno, tras hacer una copia de seguridad.",
+      "alt": "Los ficheros generados, configuración de Git legible"
+    },
+    "more": {
+      "ssh": {
+        "title": "Claves SSH sin complicaciones",
+        "text": "Crea una clave, añádela al agente, copia la clave pública y prueba la conexión, desde el propio perfil."
+      },
+      "signing": {
+        "title": "Commits firmados",
+        "text": "Con tu clave SSH o con GPG, para que tus commits lleven la marca Verified."
+      },
+      "https": {
+        "title": "HTTPS sin contraseñas en la app",
+        "text": "Los inicios de sesión pasan por Git Credential Manager y se guardan en el Administrador de credenciales de Windows."
+      },
+      "preview": {
+        "title": "Míralo antes de que pase",
+        "text": "Cada cambio te enseña primero el diff o el comando exacto. No se escribe nada hasta que confirmas."
+      },
+      "backups": {
+        "title": "Copias de seguridad de cada cambio",
+        "text": "Copias con fecha de tus ficheros, que se restauran con un clic desde Ajustes."
+      },
+      "sourcetree": {
+        "title": "Se lleva bien con SourceTree",
+        "text": "Detecta la configuración de SourceTree y te dice qué cambiar para que también use tus perfiles."
+      }
+    }
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "q1": {
+      "q": "¿Cambia mi configuración global de Git?",
+      "a": "Apenas. Añade una línea de inclusión a tu <code>.gitconfig</code> y otra a <code>~/.ssh/config</code>, tras hacer una copia de seguridad. Todo lo demás va en sus propios ficheros. Tu nombre y email globales solo se tocan si lo eliges en el asistente del primer arranque, y antes se guardan."
+    },
+    "q2": {
+      "q": "¿Tiene que quedarse abierta la app?",
+      "a": "No. Git lee la configuración que escribió la app, así que la app solo sirve para configurar. No arranca con Windows."
+    },
+    "q3": {
+      "q": "¿Borrará o cambiará mis claves SSH?",
+      "a": "Nunca. Puede crear claves nuevas y corregir los permisos de una existente si se lo pides, pero nunca borra claves, ni siquiera al retirar la app."
+    },
+    "q4": {
+      "q": "Windows dice «Windows protegió su PC». ¿Es seguro?",
+      "a": "El instalador aún no está firmado, así que SmartScreen avisa la primera vez. Pulsa <strong>Más información</strong> → <strong>Ejecutar de todas formas</strong>. El código es público y cada instalador se compila en GitHub a partir de él."
+    },
+    "q5": {
+      "q": "¿Qué necesito instalar antes?",
+      "a": "Windows 10 (22H2) o Windows 11, y <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 o posterior, que incluye Git Credential Manager. El instalador es por usuario y no necesita permisos de administrador."
+    },
+    "q6": {
+      "q": "¿Funciona en macOS o Linux?",
+      "a": "No, es solo para Windows: usa el agente SSH de Windows, el Administrador de credenciales de Windows y los permisos de ficheros de Windows."
+    }
+  },
+  "cta": {
+    "title": "Deja de pensar en qué cuenta estás usando",
+    "text": "Gratis, de código abierto y se instala en un minuto."
+  },
+  "footer": {
+    "license": "Software libre bajo la <a href=\"https://github.com/sergiosahuquillo/git-profile-manager/blob/main/LICENSE\">GPL-3.0</a>.",
+    "releases": "Versiones",
+    "issues": "Informar de un problema"
+  }
+}

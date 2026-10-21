@@ -1,0 +1,66 @@
+# Publica site/ en GitHub Pages: https://sergiosahuquillo.github.io/git-profile-manager/
+#
+# No hay compilación: se copia site/ tal cual y las capturas de .github/assets/ van a shots/, que es
+# donde las busca la página, para no tenerlas dos veces en el repositorio. Antes se comprueba que los
+# textos de los dos idiomas cuadran (scripts/site/check-i18n.mjs).
+#
+# Requisito único, a mano: Settings → Pages → Source: GitHub Actions.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: &web
+      - site/**
+      - .github/assets/**
+      - scripts/site/**
+      - .github/workflows/pages.yml
+  # En los PR solo se comprueba, no se publica.
+  pull_request:
+    paths: *web
+  workflow_dispatch:
+
+# Un despliegue cada vez, sin cancelar el que está en marcha.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Textos
+        run: node scripts/site/check-i18n.mjs
+
+      - name: Montar
+        run: |
+          mkdir -p _site/shots
+          cp -r site/. _site/
+          cp .github/assets/* _site/shots/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,162 @@
+# Compila, pasa las comprobaciones y empaqueta el instalador en cada empujón. En main, además, publica
+# la release.
+#
+# Solo Windows, y a propósito: la app gestiona el Administrador de credenciales, el agente OpenSSH de
+# Windows y las ACL de las claves, así que no tiene sentido compilarla en otro sistema.
+#
+# La versión: tauri.conf.json dice MAJOR.MINOR (el parche que ponga se ignora) y el parche lo pone este
+# workflow, el siguiente al último tag vMAJOR.MINOR.*. En el repositorio no se escribe nunca: se le pasa
+# a `tauri build` con --config y queda en el tag. Fuera de main lleva detrás -dev.<ejecución>, para que
+# un instalador de prueba no se confunda con una release. Un commit con [skip ci] en el mensaje no sale
+# en release, porque no llega a ejecutarse nada.
+
+name: build
+
+# Lo que solo es documentación, la web (site/, que publica pages.yml) o configuración del editor no
+# compila ni saca release. Si el empujón trae algo más, se ejecuta entero, y esos commits salen
+# igualmente en las notas de la siguiente release.
+on:
+  push:
+    paths-ignore: &documentacion
+      - README.md
+      - .github/README.md
+      - .github/assets/**
+      - design/**
+      - site/**
+      - scripts/site/**
+      - .github/workflows/pages.yml
+      - .claude/**
+  pull_request:
+    paths-ignore: *documentacion
+
+# En main se encolan en vez de cancelarse: dos empujones seguidos no pueden calcular el mismo número
+# ni quedarse uno sin release. En las demás ramas, el empujón nuevo deja obsoleto al anterior.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    # Para crear el tag y la release. En los PR desde un fork GitHub lo deja en lectura igualmente.
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Todo el historial: los tags dicen qué versión toca y desde dónde contar los cambios.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Dependencias
+        run: pnpm install --frozen-lockfile
+
+      # Biome, y tsc dentro de `pnpm build`: falla si a un catálogo de idioma le falta una clave.
+      - name: Frontend
+        run: |
+          pnpm lint
+          pnpm build
+
+      # Unitarios, Git real sobre un HOME temporal y los ficheros generados comparados byte a byte.
+      # Va después del frontend porque la app Tauri necesita dist/ para compilar.
+      - name: Tests
+        run: cargo test --workspace --locked
+
+      # Los tests regeneran src/api/bindings con ts-rs: si cambia algo, alguien olvidó `pnpm bindings`.
+      - name: Tipos generados
+        shell: bash
+        run: |
+          if ! git diff --exit-code -- src/api/bindings; then
+            echo "::error::src/api/bindings no está al día con los modelos de Rust: ejecuta pnpm bindings"
+            exit 1
+          fi
+
+      - name: Versión
+        id: version
+        shell: bash
+        run: |
+          base=$(sed -n 's/^  "version": "\([0-9]*\.[0-9]*\)\.[0-9]*".*/\1/p' src-tauri/tauri.conf.json)
+          if [ -z "$base" ]; then
+            echo "::error file=src-tauri/tauri.conf.json::No encuentro \"version\": \"MAJOR.MINOR.PATCH\""
+            exit 1
+          fi
+
+          last=$(git tag --list "v$base.*" | sed -n "s/^v${base//./\\.}\.\([0-9][0-9]*\)$/\1/p" | sort -n | tail -1)
+          version="$base.$(( ${last:--1} + 1 ))"
+          if [ "$GITHUB_EVENT_NAME" != push ] || [ "$GITHUB_REF" != refs/heads/main ]; then
+            version="$version-dev.$GITHUB_RUN_NUMBER"
+          fi
+
+          # La release anterior a la que llega este commit, para contar los cambios desde ahí.
+          previous=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          echo "Versión $version (anterior: ${previous:-ninguna})"
+
+      # La versión entra por --config, que se mezcla con tauri.conf.json: llega al instalador, a
+      # *Aplicaciones instaladas* y a las propiedades del ejecutable.
+      - name: Instalador
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          echo "{\"version\": \"$VERSION\"}" > "$RUNNER_TEMP/version.json"
+          pnpm tauri build --ci --config "$RUNNER_TEMP/version.json"
+
+          mkdir -p artifacts
+          cp "target/release/bundle/nsis/GitProfile Manager_${VERSION}_x64-setup.exe" "artifacts/GitProfileManager-$VERSION-setup.exe"
+
+      # FIRMA: cuando haya certificado, aquí va un paso que firme artifacts/*.exe con signtool o con
+      # Azure Trusted Signing, leyendo el certificado de los secretos del repositorio. Sin firma,
+      # SmartScreen avisa al abrirlo.
+
+      # En todas las ramas y PR, para poder probar el instalador antes de mezclar.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GitProfileManager-${{ steps.version.outputs.version }}-setup
+          path: artifacts/*.exe
+          if-no-files-found: error
+
+      # El código fuente no se adjunta: GitHub pone en cada release el zip y el tar.gz del tag.
+      - name: Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+        run: |
+          {
+            echo "## Cambios"
+            echo
+            if [ -n "$PREVIOUS" ]; then
+              git log --no-merges --pretty='format:- %s' "$PREVIOUS..HEAD"
+            else
+              git log --no-merges --pretty='format:- %s'
+            fi
+            echo
+            if [ -n "$PREVIOUS" ]; then
+              echo
+              echo "**Todos los cambios**: https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS...v$VERSION"
+            fi
+          } > notes.md
+
+          gh release create "v$VERSION" "artifacts/GitProfileManager-$VERSION-setup.exe" \
+            --title "GitProfile Manager $VERSION" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA"
