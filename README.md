@@ -16,7 +16,7 @@ This is the **developer README**. If you only want to use the app, the project p
 
 | Folder | Contents |
 | --- | --- |
-| `crates/gpm-core` | Rust core with no UI dependencies: `models`, `profile_store`, `profile_validator`, `rule_matcher`, `config` (`.gitconfig` generator and escaping), `files` (atomic writes, backups, drift, diff), `git` (runner, URLs), `ssh`, `credentials` (GCM and Windows Credential Manager), `integration`, `diagnostics` (diagnostics and Smart Clone), `environment` and `workspace` (save pipeline) |
+| `crates/gpm-core` | Rust core with no UI dependencies: `models`, `profile_store`, `profile_validator`, `rule_matcher`, `config` (`.gitconfig` generator and escaping), `files` (atomic writes, backups, drift, diff), `git` (runner, URLs), `ssh`, `credentials` (GCM and Windows Credential Manager), `integration`, `diagnostics` (diagnostics and Smart Clone), `environment`, `updates` (Git for Windows: release check, verified download, silent install) and `workspace` (save pipeline) |
 | `crates/gpm-core/tests` | Unit tests, integration tests with real Git on a temporary HOME, isolation tests between profiles, and tests of the generated files, compared byte by byte with `fixtures/generated` |
 | `src-tauri` | Tauri app: commands that delegate to the core, frameless window (the title bar is drawn by the design) |
 | `src` | React + TypeScript frontend: `styles/styles.css` is the design's CSS unchanged; `styles/app.css` only adds real states the prototype doesn't show |
@@ -54,6 +54,23 @@ $env:HOME = "C:\temp\gpm-sandbox\home"; $env:GIT_CONFIG_GLOBAL = "C:\temp\gpm-sa
 ```
 
 Windows OpenSSH keeps using `%USERPROFILE%\.ssh`, so the SSH connection test isn't isolated.
+
+### Updates
+
+On startup the app checks the latest Git for Windows release on GitHub (`updates::git`) and its own `latest.json` (`tauri-plugin-updater`), according to `Settings.UpdateMode` (`Auto`, `Manual`, `Off`).
+
+- **Git's installer** is checked twice before running: its SHA-256 against the `digest` GitHub publishes, and its Authenticode signature. It runs silently (`/VERYSILENT`) over the existing install.
+- **Elevation:** Git for Windows has no flag for "all users" or "just me": that depends on whether it runs elevated. Updates keep the existing scope, using `runas` when Git is in Program Files.
+- **Fresh installs** (Git missing) run elevated for all users, or unelevated with `/DIR` for the current user. In both cases `/o:` forces GCM and Git on the PATH.
+- **When the update waits:** in `Auto` it installs on its own unless a UAC prompt would actually appear (`updates::win::elevation_prompts`). Then it stays downloaded in `%LOCALAPPDATA%\GitProfileManager\updates` until the user clicks Install.
+
+In debug builds two variables help to try it:
+
+```powershell
+$env:GITPROFILEMANAGER_FAKE_GIT_VERSION = "2.40.0.windows.1"; $env:GITPROFILEMANAGER_FORCE_UAC_PROMPT = "1"; pnpm tauri dev
+```
+
+The first pretends an older Git is installed, so the latest one is offered (and reinstalled). The second forces the "waits for Install" flow. In `pnpm dev`, the mock backend simulates updates; `?uac` simulates the UAC prompt and `?nogit` (`&uac`, `&std`) a PC without Git.
 
 ### Generated files
 
@@ -126,6 +143,8 @@ Every push to `main` is a release: [`build.yml`](.github/workflows/build.yml) ru
 **The version number is never edited by hand.** Only MAJOR.MINOR of `version` in `src-tauri/tauri.conf.json` counts; CI sets the patch to the next one after the latest `vMAJOR.MINOR.*` tag and passes it to `tauri build` with `--config`, so the installer, *Installed apps*, the executable, the tag and the release all agree. To move to 1.1 or 2.0, change that `version` and nothing else: the next release comes out as 1.1.0 or 2.0.0. The versions in `package.json` and `Cargo.toml` aren't read by anything; you can bump them too to keep them in step, but if you touch `Cargo.toml`, run `cargo check` to refresh `Cargo.lock`, because CI builds with `--locked` and fails otherwise. On other branches and in pull requests the version carries `-dev.<run>` and the installer is left as a workflow artifact, so you can try it before merging. A commit with `[skip ci]` doesn't produce a release, and neither does a push that only touches documentation (both READMEs, `.github/assets/`, `design/` and the website).
 
 The installer is **not code-signed** yet, so SmartScreen warns the first time: the workflow has the spot marked for the signing step.
+
+**App self-update.** The updater checks `releases/latest/download/latest.json` and only installs what is signed with the updater key. Its public key is in `plugins.updater.pubkey` in `tauri.conf.json`, and the private key goes in the `TAURI_SIGNING_PRIVATE_KEY` repository secret (plus `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` if it has one). With the secret, releases from `main` include the installer's `.sig` and a `latest.json`. Without it they're still published, but the app doesn't offer them as updates. Keep a copy of the private key: if it's lost, installed versions won't accept updates signed with a new one.
 
 ## License
 
