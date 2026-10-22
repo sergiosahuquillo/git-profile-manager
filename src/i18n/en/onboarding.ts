@@ -6,11 +6,13 @@ export const onboarding: Messages<typeof es> = {
   defaultName: "Personal",
   steps: {
     env: "Environment",
+    updates: "Updates",
     identity: "Global identity",
     activate: "Turn on",
   },
   notes: {
     env: "Nothing is written in this step.",
+    updates: "Only your choice is saved; nothing is installed yet.",
     identity: "The global identity is saved before it's removed.",
     activate: "Last step: this is where files are written, with a prior backup.",
   },

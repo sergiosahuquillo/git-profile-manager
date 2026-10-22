@@ -60,6 +60,19 @@ pub enum NoProfileMode {
     Strict,
 }
 
+/// Qué hace la app con las versiones nuevas de Git for Windows y de sí misma.
+#[derive(Serialize, Deserialize, TS, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[ts(export)]
+pub enum UpdateMode {
+    /// Descarga e instala sola. Si la instalación va a pedir UAC, se queda descargada a la espera de un clic.
+    #[default]
+    Auto,
+    /// Solo avisa: descarga e instala cuando el usuario lo pide.
+    Manual,
+    /// No consulta nada en la red.
+    Off,
+}
+
 /// Identidad Git. Solo metadatos: nunca contiene secretos.
 #[derive(Serialize, Deserialize, TS, Clone, Debug, PartialEq)]
 #[serde(rename_all = "PascalCase", default)]
@@ -137,6 +150,7 @@ pub struct AppSettings {
     pub generate_ssh_aliases: bool,
     /// Idioma de la interfaz elegido en Ajustes. `None`: el del sistema.
     pub language: Option<Lang>,
+    pub update_mode: UpdateMode,
 }
 
 impl Default for AppSettings {
@@ -146,6 +160,7 @@ impl Default for AppSettings {
             no_profile_mode: NoProfileMode::DefaultProfile,
             generate_ssh_aliases: true,
             language: None,
+            update_mode: UpdateMode::Auto,
         }
     }
 }

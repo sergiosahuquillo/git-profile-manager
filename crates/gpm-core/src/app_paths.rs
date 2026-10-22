@@ -49,6 +49,10 @@ impl AppPaths {
     pub fn status_json(&self) -> String {
         s(self.app_data_dir.join("status.json"))
     }
+    /// Instaladores descargados de Git for Windows. En `%LOCALAPPDATA%`: no deben viajar con el perfil móvil.
+    pub fn updates_dir(&self) -> PathBuf {
+        local_app_data().join("GitProfileManager").join("updates")
+    }
     pub fn error_log(&self) -> String {
         s(self.app_data_dir.join("error.log"))
     }

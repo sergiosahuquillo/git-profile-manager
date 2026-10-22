@@ -8,6 +8,7 @@ import { profiles } from "./profiles";
 import { rules } from "./rules";
 import { settings } from "./settings";
 import { shell } from "./shell";
+import { updates } from "./updates";
 
 export const en: Messages<typeof es> = {
   clone,
@@ -18,4 +19,5 @@ export const en: Messages<typeof es> = {
   rules,
   settings,
   shell,
+  updates,
 };

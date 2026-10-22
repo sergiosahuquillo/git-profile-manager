@@ -2,4 +2,12 @@
 import type { AgentState } from "./AgentState";
 import type { GcmStatus } from "./GcmStatus";
 
-export type EnvironmentReport = { gitPath: string | null, gitVersion: string | null, gitOk: boolean, gcm: GcmStatus, windowsOpenSshAvailable: boolean, gitBundledSshAvailable: boolean, agentState: AgentState, globalConfigPath: string, globalUserName: string | null, globalUserEmail: string | null, blockingError: string | null, appDataDir: string, };
+export type EnvironmentReport = { gitPath: string | null, gitVersion: string | null, gitOk: boolean, gcm: GcmStatus, 
+/**
+ * GCM es el que trae Git for Windows: se actualiza con él.
+ */
+gcmBundled: boolean, 
+/**
+ * Instalar una versión nueva de Git va a mostrar el diálogo de UAC.
+ */
+gitUpdatePromptsUac: boolean, windowsOpenSshAvailable: boolean, gitBundledSshAvailable: boolean, agentState: AgentState, globalConfigPath: string, globalUserName: string | null, globalUserEmail: string | null, blockingError: string | null, appDataDir: string, };

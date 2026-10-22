@@ -9,11 +9,12 @@ use gpm_core::diagnostics::repo::canonicalize_remote;
 use gpm_core::environment::findings_from_settings;
 use gpm_core::files::text_diff::{self, DiffKind};
 use gpm_core::git::GitUrl;
-use gpm_core::git::runner::parse_version;
+use gpm_core::git::runner::{GitVersion, parse_version, parse_version_full};
 use gpm_core::integration::{add_ssh_include, remove_ssh_include};
-use gpm_core::models::{CloneMethod, Profile, Rule, RuleType, SigningMode, SshClientKind};
+use gpm_core::models::{CloneMethod, Profile, Rule, RuleType, SigningMode, SshClientKind, UpdateMode};
 use gpm_core::profile_validator::{ConflictSeverity, detect_conflicts, make_slug, validate};
 use gpm_core::ssh::parse_connection_output;
+use gpm_core::updates::git::{InstallScope, installer_args, is_under, release_from_json, user_install_dir};
 
 fn paths() -> AppPaths {
     AppPaths::new(r"C:\Users\juan", r"C:\tmp")
@@ -221,6 +222,82 @@ fn parses_git_version() {
 }
 
 #[test]
+fn parses_full_git_version() {
+    let v = parse_version_full("git version 2.53.0.windows.2").unwrap();
+    assert_eq!(v, GitVersion { major: 2, minor: 53, patch: 0, win_rev: 2 });
+    assert_eq!(v.to_string(), "2.53.0.2");
+    assert_eq!(parse_version_full("v2.56.0.windows.1").unwrap().to_string(), "2.56.0");
+    assert_eq!(parse_version_full("git version 2.45.0").unwrap().win_rev, 0);
+}
+
+#[test]
+fn orders_git_versions_with_windows_revision() {
+    let v = |s| parse_version_full(s).unwrap();
+    assert!(v("2.53.0.windows.2") > v("2.53.0.windows.1"));
+    assert!(v("2.54.0.windows.1") > v("2.53.0.windows.9"));
+    assert_eq!(v("v2.53.0.windows.1"), v("git version 2.53.0.windows.1"));
+}
+
+const RELEASE_JSON: &str = r#"{
+  "tag_name": "v2.56.0.windows.2",
+  "assets": [
+    { "name": "Git-2.56.0.2-64-bit.tar.bz2", "browser_download_url": "https://x/a.tar.bz2", "size": 1, "digest": "sha256:00" },
+    { "name": "PortableGit-2.56.0.2-64-bit.7z.exe", "browser_download_url": "https://x/p.exe", "size": 2,
+      "digest": "sha256:075e158ef8e1f0ab80b347e245405d3eca735c2dc88fd8e032e137d0ca61f61b" },
+    { "name": "Git-2.56.0.2-64-bit.exe", "browser_download_url": "https://x/Git-2.56.0.2-64-bit.exe", "size": 66763664,
+      "digest": "sha256:52188F917B378F00C70EC136BCF090005F30D44FBC4EBA0BCE759CC6592D60F6" },
+    { "name": "Git-2.56.0.2-arm64.exe", "browser_download_url": "https://x/Git-2.56.0.2-arm64.exe", "size": 64316408,
+      "digest": "sha256:b9ced78ce371577dc966f50ae571909d6731e36d31065d35c8efa21544c58bf0" }
+  ]
+}"#;
+
+#[test]
+fn picks_git_installer_from_release() {
+    let r = release_from_json(RELEASE_JSON, "64-bit").unwrap();
+    assert_eq!(r.version.to_string(), "2.56.0.2");
+    assert_eq!(r.asset_name, "Git-2.56.0.2-64-bit.exe");
+    assert_eq!(r.size, 66763664);
+    assert_eq!(r.sha256, "52188f917b378f00c70ec136bcf090005f30d44fbc4eba0bce759cc6592d60f6");
+    let arm = release_from_json(RELEASE_JSON, "arm64").unwrap();
+    assert_eq!(arm.url, "https://x/Git-2.56.0.2-arm64.exe");
+}
+
+#[test]
+fn rejects_git_release_without_digest() {
+    let json = RELEASE_JSON
+        .replace(r#""sha256:52188F917B378F00C70EC136BCF090005F30D44FBC4EBA0BCE759CC6592D60F6""#, "null");
+    assert!(release_from_json(&json, "64-bit").is_err());
+    assert!(release_from_json(r#"{"tag_name":"latest","assets":[]}"#, "64-bit").is_err());
+}
+
+#[test]
+fn detects_paths_under_local_app_data() {
+    let local = std::path::Path::new(r"C:\Users\juan\AppData\Local");
+    assert!(is_under(std::path::Path::new(r"C:\Users\Juan\AppData\Local\Programs\Git"), local));
+    assert!(!is_under(std::path::Path::new(r"C:\Program Files\Git"), local));
+    assert!(!is_under(std::path::Path::new(r"C:\Users\juan\AppData\LocalLow\Git"), local));
+}
+
+#[test]
+fn builds_silent_installer_args() {
+    let log = std::path::Path::new(r"C:\tmp\git-install.log");
+    let has = |args: &[String], prefix: &str| args.iter().any(|a| a.starts_with(prefix));
+
+    // Actualización: reutiliza las opciones y la carpeta de la instalación existente.
+    let update = installer_args(log, None);
+    assert!(has(&update, "/VERYSILENT"));
+    assert!(!has(&update, "/o:") && !has(&update, "/DIR="));
+
+    // Desde cero: GCM y PATH siempre; la carpeta solo para el usuario.
+    let machine = installer_args(log, Some(InstallScope::Machine));
+    assert!(has(&machine, "/o:UseCredentialManager=Enabled") && has(&machine, "/o:PathOption=Cmd"));
+    assert!(!has(&machine, "/DIR="));
+    let user = installer_args(log, Some(InstallScope::User));
+    let dir = format!("/DIR={}", user_install_dir().display());
+    assert!(user.contains(&dir) && dir.ends_with(r"Programs\Git"));
+}
+
+#[test]
 fn reads_profiles_json() {
     let json = r#"{
   "SchemaVersion": 1,
@@ -253,6 +330,8 @@ fn reads_profiles_json() {
     assert_eq!(state.profiles[0].preferred_clone_method, CloneMethod::Https);
     assert_eq!(state.profiles[0].rules[0].kind, RuleType::Remote);
     assert_eq!(state.settings.ssh_client, SshClientKind::GitBundled);
+    // Un profiles.json anterior a las actualizaciones carga con el modo por defecto.
+    assert_eq!(state.settings.update_mode, UpdateMode::Auto);
     assert_eq!(state.hash_for(r"c:\users\JUAN\.gitprofiles\rules.gitconfig"), Some("ABC"));
     let back = serde_json::to_string(&state).unwrap();
     assert!(back.contains("\"PreferredCloneMethod\":\"Https\""));

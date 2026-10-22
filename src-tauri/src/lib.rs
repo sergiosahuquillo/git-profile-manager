@@ -37,6 +37,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(ctx)
         .invoke_handler(tauri::generate_handler![
             commands::bootstrap,
@@ -86,6 +88,12 @@ pub fn run() {
             commands::clone_defaults,
             commands::clone_preview,
             commands::clone_run,
+            commands::set_update_mode,
+            commands::check_git_update,
+            commands::download_git_update,
+            commands::install_git_update,
+            commands::git_install_options,
+            commands::install_git,
             commands::sourcetree_status,
             commands::open_in_explorer,
             commands::open_in_sourcetree,

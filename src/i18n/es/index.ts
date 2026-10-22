@@ -6,5 +6,6 @@ import { profiles } from "./profiles";
 import { rules } from "./rules";
 import { settings } from "./settings";
 import { shell } from "./shell";
+import { updates } from "./updates";
 
-export const es = { clone, common, diagnostics, onboarding, profiles, rules, settings, shell };
+export const es = { clone, common, diagnostics, onboarding, profiles, rules, settings, shell, updates };

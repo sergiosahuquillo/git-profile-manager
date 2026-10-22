@@ -57,3 +57,30 @@ label > .req { margin-inline-start: 2px; font-size: var(--text-sm); font-weight:
 @media (max-width: 1100px) {
   .split { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Actualizaciones: lo que va a la derecha de cada línea del sidebar (botón, progreso o reintento). */
+.env-line > .od-truncate { flex: 1 1 auto; }
+.env-update {
+  flex: none; display: inline-flex; align-items: center; gap: 3px;
+  padding: 0 6px; border: 0; border-radius: var(--radius-pill);
+  background: var(--accent-subtle); color: var(--accent);
+  font: inherit; font-size: var(--text-xs); font-weight: 600; line-height: 18px; white-space: nowrap;
+}
+button.env-update { cursor: pointer; transition: background-color var(--t-fast) var(--ease-out); }
+button.env-update:hover { background: var(--accent); color: #ffffff; }
+button.env-update:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.env-line .env-update .icon { width: 10px; height: 10px; color: currentColor; }
+.env-update.is-busy { background: none; color: var(--muted); font-weight: 500; padding-inline-end: 0; }
+.env-update.is-busy .icon { animation: spin 900ms linear infinite; }
+.env-update.is-ready { background: var(--accent); color: #ffffff; }
+.env-update.is-ready:hover { background: var(--accent-hover); }
+.env-update.is-error { background: var(--warn-subtle); color: var(--warn); }
+button.env-update.is-error:hover { background: var(--warn); color: #ffffff; }
+
+/* Filas de versión del panel Actualizaciones. */
+.update-versions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+.update-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--muted); }
+.update-state.is-error { color: var(--warn); }
+.update-state .spin { animation: spin 900ms linear infinite; }
+.kv .progress { display: block; margin-block-start: var(--space-1); }
+.kv .progress-bar { display: block; }

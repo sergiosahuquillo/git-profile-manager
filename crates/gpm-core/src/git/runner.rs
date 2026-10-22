@@ -11,6 +11,30 @@ use crate::process::{self, ProcessRequest, ProcessResult};
 pub const MINIMUM_VERSION: (u32, u32, u32) = (2, 36, 0);
 
 static VERSION_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\d+)\.(\d+)\.(\d+)").unwrap());
+static FULL_VERSION_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(\d+)\.(\d+)\.(\d+)(?:\.windows\.(\d+))?").unwrap());
+
+/// Versión de Git for Windows con su revisión: `2.53.0.windows.2` es posterior a `2.53.0.windows.1`.
+/// El orden de los campos es el de comparación.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct GitVersion {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+    /// `windows.N`; 0 si no aparece (Git sin compilar para Windows).
+    pub win_rev: u32,
+}
+
+impl std::fmt::Display for GitVersion {
+    /// `2.53.0`, o `2.53.0.2` si la revisión es mayor que 1 (como nombra Git for Windows sus instaladores).
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)?;
+        if self.win_rev > 1 {
+            write!(f, ".{}", self.win_rev)?;
+        }
+        Ok(())
+    }
+}
 
 /// Opciones de una ejecución de Git.
 #[derive(Default)]
@@ -86,6 +110,11 @@ impl GitRunner {
         if r.success() { parse_version(&r.stdout) } else { None }
     }
 
+    pub fn version_full(&self) -> Option<GitVersion> {
+        let r = self.run(&["--version"]);
+        if r.success() { parse_version_full(&r.stdout) } else { None }
+    }
+
     /// Ruta del `.gitconfig` global según Git (puede estar redirigido con HOME o GIT_CONFIG_GLOBAL).
     pub fn global_config_path(&self) -> String {
         let r = self.run(&["config", "--global", "--list", "--show-origin"]);
@@ -152,6 +181,17 @@ fn missing() -> ProcessResult {
 pub fn parse_version(output: &str) -> Option<(u32, u32, u32)> {
     let m = VERSION_RE.captures(output)?;
     Some((m[1].parse().ok()?, m[2].parse().ok()?, m[3].parse().ok()?))
+}
+
+/// `git version 2.53.0.windows.1` o la etiqueta de una release (`v2.53.0.windows.1`).
+pub fn parse_version_full(text: &str) -> Option<GitVersion> {
+    let m = FULL_VERSION_RE.captures(text)?;
+    Some(GitVersion {
+        major: m[1].parse().ok()?,
+        minor: m[2].parse().ok()?,
+        patch: m[3].parse().ok()?,
+        win_rev: m.get(4).map_or(Some(0), |r| r.as_str().parse().ok())?,
+    })
 }
 
 pub fn format_version(v: (u32, u32, u32)) -> String {

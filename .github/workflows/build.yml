@@ -110,16 +110,31 @@ jobs:
 
       # La versión entra por --config, que se mezcla con tauri.conf.json: llega al instalador, a
       # *Aplicaciones instaladas* y a las propiedades del ejecutable.
+      #
+      # Autoactualización: en main, el instalador se firma con la clave del updater (secreto
+      # TAURI_SIGNING_PRIVATE_KEY) y sale su .sig, con el que la app comprueba lo que descarga. Fuera de
+      # main, o sin el secreto (PR desde un fork), no se firma: esos instaladores no se publican.
       - name: Instalador
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          echo "{\"version\": \"$VERSION\"}" > "$RUNNER_TEMP/version.json"
+          updater=false
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/main ]; then
+            updater=true
+          fi
+          echo "{\"version\": \"$VERSION\", \"bundle\": {\"createUpdaterArtifacts\": $updater}}" > "$RUNNER_TEMP/version.json"
           pnpm tauri build --ci --config "$RUNNER_TEMP/version.json"
 
           mkdir -p artifacts
-          cp "target/release/bundle/nsis/GitProfile Manager_${VERSION}_x64-setup.exe" "artifacts/GitProfileManager-$VERSION-setup.exe"
+          setup="target/release/bundle/nsis/GitProfile Manager_${VERSION}_x64-setup.exe"
+          cp "$setup" "artifacts/GitProfileManager-$VERSION-setup.exe"
+          if [ "$updater" = true ]; then
+            mkdir -p updater
+            cp "$setup.sig" updater/setup.sig
+          fi
 
       # FIRMA: cuando haya certificado, aquí va un paso que firme artifacts/*.exe con signtool o con
       # Azure Trusted Signing, leyendo el certificado de los secretos del repositorio. Sin firma,
@@ -156,7 +171,24 @@ jobs:
             fi
           } > notes.md
 
-          gh release create "v$VERSION" "artifacts/GitProfileManager-$VERSION-setup.exe" \
+          # latest.json es lo que consulta la app (releases/latest/download/latest.json). Sin firma no se
+          # publica, y la app no ofrece esta release como actualización.
+          assets=("artifacts/GitProfileManager-$VERSION-setup.exe")
+          if [ -f updater/setup.sig ]; then
+            jq -n \
+              --arg version "$VERSION" \
+              --arg notes "$(cat notes.md)" \
+              --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg sig "$(cat updater/setup.sig)" \
+              --arg url "https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION/GitProfileManager-$VERSION-setup.exe" \
+              '{version: $version, notes: $notes, pub_date: $date, platforms: {"windows-x86_64": {signature: $sig, url: $url}}}' \
+              > updater/latest.json
+            assets+=(updater/latest.json)
+          else
+            echo "::warning::Sin TAURI_SIGNING_PRIVATE_KEY: la release sale sin latest.json y la app no la ofrecerá como actualización"
+          fi
+
+          gh release create "v$VERSION" "${assets[@]}" \
             --title "GitProfile Manager $VERSION" \
             --notes-file notes.md \
             --target "$GITHUB_SHA"

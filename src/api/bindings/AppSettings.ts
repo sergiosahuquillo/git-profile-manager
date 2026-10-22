@@ -2,9 +2,10 @@
 import type { Lang } from "./Lang";
 import type { NoProfileMode } from "./NoProfileMode";
 import type { SshClientKind } from "./SshClientKind";
+import type { UpdateMode } from "./UpdateMode";
 
 export type AppSettings = { SshClient: SshClientKind, NoProfileMode: NoProfileMode, GenerateSshAliases: boolean, 
 /**
  * Idioma de la interfaz elegido en Ajustes. `None`: el del sistema.
  */
-Language: Lang | null, };
+Language: Lang | null, UpdateMode: UpdateMode, };

@@ -3,11 +3,13 @@ export const onboarding = {
   defaultName: "Personal",
   steps: {
     env: "Entorno",
+    updates: "Actualizaciones",
     identity: "Identidad global",
     activate: "Activar",
   },
   notes: {
     env: "Nada se escribe en este paso.",
+    updates: "Solo se guarda tu elección; no se instala nada todavía.",
     identity: "La identidad global se guarda antes de retirarla.",
     activate: "Último paso: aquí sí se escribe, con copia de seguridad previa.",
   },
