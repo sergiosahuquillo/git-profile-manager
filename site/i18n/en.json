@@ -79,6 +79,11 @@
       "text": "Everything the app writes is standard Git and OpenSSH configuration. In your own <code>.gitconfig</code> and <code>~/.ssh/config</code> it adds a single line each, after a backup.",
       "alt": "The generated files, readable Git configuration"
     },
+    "updates": {
+      "title": "Always up to date",
+      "text": "Keeps the app and Git for Windows up to date: <strong>automatically</strong>, <strong>notify only</strong> or <strong>off</strong>. Every Git installer is verified first, and if you don't have Git yet, it installs it for you.",
+      "alt": "The Updates panel in Settings: Automatic mode selected, and Git for Windows and the app up to date"
+    },
     "more": {
       "ssh": {
         "title": "SSH keys made easy",
@@ -126,11 +131,15 @@
     },
     "q5": {
       "q": "What do I need to install first?",
-      "a": "Windows 10 (22H2) or Windows 11, and <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 or later, which includes Git Credential Manager. The installer is per user and doesn't need administrator rights."
+      "a": "Windows 10 (22H2) or Windows 11, and <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 or later, which includes Git Credential Manager. If you don't have Git, the app can install it for you. The installer is per user and doesn't need administrator rights."
     },
     "q6": {
       "q": "Does it work on macOS or Linux?",
       "a": "No, it's Windows-only: it relies on the Windows SSH agent, Windows Credential Manager and Windows file permissions."
+    },
+    "q7": {
+      "q": "Does the app connect to the internet?",
+      "a": "For two things. When it opens, it asks GitHub for the latest versions of Git for Windows and of the app, unless updates are off. It also tests each profile's SSH and HTTPS connection against your Git provider, the same way Git connects. Your keys and passwords never leave your PC."
     }
   },
   "cta": {

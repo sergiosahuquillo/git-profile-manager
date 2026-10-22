@@ -77,10 +77,24 @@ hand if you want. In your own `.gitconfig` and `~/.ssh/config` it adds a single 
 
 <img src="assets/screenshot-generated.png" alt="The generated files, readable Git configuration" />
 
+### Always up to date
+
+The app keeps itself and Git for Windows up to date, and you choose how: **automatically**, **notify
+only** or **off**. When the app opens, the sidebar shows each version next to an update button, or the
+progress if an update is already running.
+
+- **Git for Windows** comes from the official installer. Before installing, the app checks the
+  published SHA-256 and the installer's digital signature. It installs over your current Git with the
+  same options, and Git Credential Manager and Git's SSH are updated along with it. If Windows is going
+  to ask for administrator permission, nothing interrupts you: the update waits, already downloaded,
+  until you click **Install**.
+- **No Git yet?** The app installs it for you, for all users or just for you.
+- **The app itself** downloads and installs its new versions, signed, and restarts.
+
 ### And also
 
-- A first-run wizard that checks Git, Git Credential Manager and the SSH agent, and can turn your
-  current global identity into your default profile.
+- A first-run wizard that checks Git, Git Credential Manager and the SSH agent, asks how you want
+  updates, and can turn your current global identity into your default profile.
 - Backups of every change, restorable in one click.
 - Plays well with SourceTree.
 - Dark and light modes, in English and Spanish.
@@ -98,9 +112,10 @@ hand if you want. In your own `.gitconfig` and `~/.ssh/config` it adds a single 
 
 **Requirements:** Windows 10 (22H2) or Windows 11, with
 [Git for Windows](https://git-scm.com/download/win) 2.36 or later, which includes Git Credential
-Manager.
+Manager. If you don't have it, the app can install it for you.
 
-To update, run the new installer over the old one: your profiles and settings stay.
+The app updates itself. You can also run a new installer over the old one: your profiles and settings
+stay.
 
 ## FAQ
 
@@ -117,6 +132,15 @@ and email are only touched if you choose to in the first-run wizard, and they're
 
 No. Git reads the configuration the app wrote, so the app is only for setting things up. It doesn't
 start with Windows.
+</details>
+
+<details>
+<summary><b>Does the app connect to the internet?</b></summary>
+
+For two things. When it opens, it asks GitHub for the latest versions of Git for Windows and of the app,
+unless updates are set to **off**. It also tests each profile's SSH and HTTPS connection against your
+Git provider, the same way Git connects. Your keys and passwords never leave your PC: those tests go
+through `ssh` and Git Credential Manager.
 </details>
 
 <details>

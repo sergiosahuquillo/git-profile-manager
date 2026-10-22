@@ -79,6 +79,11 @@
       "text": "Todo lo que escribe la app es configuración estándar de Git y OpenSSH. En tu <code>.gitconfig</code> y en tu <code>~/.ssh/config</code> añade una sola línea en cada uno, tras hacer una copia de seguridad.",
       "alt": "Los ficheros generados, configuración de Git legible"
     },
+    "updates": {
+      "title": "Siempre al día",
+      "text": "Mantiene al día la app y Git for Windows: <strong>automáticamente</strong>, <strong>solo avisando</strong> o <strong>nunca</strong>. Cada instalador de Git se verifica antes, y si aún no tienes Git, te lo instala.",
+      "alt": "El panel Actualizaciones de Ajustes: el modo Automáticas elegido, y Git for Windows y la app al día"
+    },
     "more": {
       "ssh": {
         "title": "Claves SSH sin complicaciones",
@@ -126,15 +131,19 @@
     },
     "q5": {
       "q": "¿Qué necesito instalar antes?",
-      "a": "Windows 10 (22H2) o Windows 11, y <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 o posterior, que incluye Git Credential Manager. El instalador es por usuario y no necesita permisos de administrador."
+      "a": "Windows 10 (22H2) o Windows 11, y <a href=\"https://git-scm.com/download/win\">Git for Windows</a> 2.36 o posterior, que incluye Git Credential Manager. Si no tienes Git, la app te lo puede instalar. El instalador es por usuario y no necesita permisos de administrador."
     },
     "q6": {
       "q": "¿Funciona en macOS o Linux?",
       "a": "No, es solo para Windows: usa el agente SSH de Windows, el Administrador de credenciales de Windows y los permisos de ficheros de Windows."
+    },
+    "q7": {
+      "q": "¿La app se conecta a internet?",
+      "a": "Para dos cosas. Al abrirse, pregunta a GitHub por las últimas versiones de Git for Windows y de la app, salvo que tengas las actualizaciones desactivadas. Y prueba la conexión SSH y HTTPS de cada perfil con tu proveedor de Git, igual que se conecta Git. Tus claves y contraseñas no salen de tu equipo."
     }
   },
   "cta": {
-    "title": "Deja de pensar en qué cuenta estás usando",
+    "title": "Deja de pensar cuál es la cuenta que estás usando",
     "text": "Gratis, de código abierto y se instala en un minuto."
   },
   "footer": {

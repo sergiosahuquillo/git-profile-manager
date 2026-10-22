@@ -116,9 +116,56 @@ function initLang(current) {
   });
 }
 
+// Escaparate de funciones (patrón de pestañas). Avanza solo: cada vez que termina la barra de la pestaña
+// activa (animación CSS) pasa a la siguiente. Al elegir una a mano, o con «reducir movimiento», se para.
+function initShowcase() {
+  const root = document.querySelector("[data-showcase]");
+  if (!root) return;
+  const tabs = [...root.querySelectorAll('[role="tab"]')];
+  const slides = tabs.map((tab) => document.getElementById(tab.getAttribute("aria-controls")));
+  let current = 0;
+
+  const select = (i, focus = false) => {
+    current = (i + tabs.length) % tabs.length;
+    tabs.forEach((tab, k) => {
+      const on = k === current;
+      tab.classList.toggle("is-active", on);
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+      slides[k].classList.toggle("is-active", on);
+    });
+    if (focus) tabs[current].focus();
+  };
+  const stop = () => root.classList.add("is-manual");
+
+  tabs.forEach((tab, i) =>
+    tab.addEventListener("click", () => {
+      stop();
+      select(i);
+    }),
+  );
+  root.querySelector('[role="tablist"]').addEventListener("keydown", (e) => {
+    const moves = { ArrowDown: current + 1, ArrowRight: current + 1, ArrowUp: current - 1, ArrowLeft: current - 1, Home: 0, End: -1 };
+    if (!(e.key in moves)) return;
+    e.preventDefault();
+    stop();
+    select(moves[e.key], true);
+  });
+  root.addEventListener("animationend", (e) => {
+    if (e.target.classList.contains("showcase-progress") && !root.classList.contains("is-manual")) select(current + 1);
+  });
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) stop();
+  // Fuera de pantalla no avanza: así se ve desde la primera al llegar al apartado.
+  new IntersectionObserver(([entry]) => root.classList.toggle("is-offscreen", !entry.isIntersecting), {
+    threshold: 0.4,
+  }).observe(root);
+}
+
 const lang = initialLang();
 initTheme();
 initLang(lang);
+initShowcase();
 loadRelease();
 setLang(lang).catch((err) => {
   console.error(err);

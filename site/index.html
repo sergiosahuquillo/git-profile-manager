@@ -175,48 +175,73 @@
           <p data-i18n="features.lead"></p>
         </div>
 
-        <div class="feature">
-          <div class="feature-text">
-            <h3 data-i18n="features.rules.title"></h3>
-            <p data-i18n-html="features.rules.text"></p>
+        <!-- Escaparate: una función a la vez. El escenario mide siempre lo mismo y cada captura (ventana entera,
+             diálogo o panel) se centra dentro a escala. Avanza solo hasta que el usuario elige una (app.js). -->
+        <div class="showcase" data-showcase>
+          <div class="showcase-list" role="tablist" aria-orientation="vertical" data-i18n-attr="aria-label:features.title">
+            <button class="showcase-tab is-active" type="button" role="tab" id="sc-tab-rules" aria-controls="sc-rules" aria-selected="true" tabindex="0">
+              <span class="showcase-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></span>
+              <span class="showcase-copy">
+                <span class="showcase-title" data-i18n="features.rules.title"></span>
+                <span class="showcase-text" id="sc-text-rules" data-i18n-html="features.rules.text"></span>
+              </span>
+              <span class="showcase-progress" aria-hidden="true"></span>
+            </button>
+            <button class="showcase-tab" type="button" role="tab" id="sc-tab-diagnostics" aria-controls="sc-diagnostics" aria-selected="false" tabindex="-1">
+              <span class="showcase-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+              <span class="showcase-copy">
+                <span class="showcase-title" data-i18n="features.diagnostics.title"></span>
+                <span class="showcase-text" id="sc-text-diagnostics" data-i18n="features.diagnostics.text"></span>
+              </span>
+              <span class="showcase-progress" aria-hidden="true"></span>
+            </button>
+            <button class="showcase-tab" type="button" role="tab" id="sc-tab-clone" aria-controls="sc-clone" aria-selected="false" tabindex="-1">
+              <span class="showcase-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span>
+              <span class="showcase-copy">
+                <span class="showcase-title" data-i18n="features.clone.title"></span>
+                <span class="showcase-text" id="sc-text-clone" data-i18n="features.clone.text"></span>
+              </span>
+              <span class="showcase-progress" aria-hidden="true"></span>
+            </button>
+            <button class="showcase-tab" type="button" role="tab" id="sc-tab-files" aria-controls="sc-files" aria-selected="false" tabindex="-1">
+              <span class="showcase-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M10 12l-2 2 2 2M14 12l2 2-2 2"/></svg></span>
+              <span class="showcase-copy">
+                <span class="showcase-title" data-i18n="features.files.title"></span>
+                <span class="showcase-text" id="sc-text-files" data-i18n-html="features.files.text"></span>
+              </span>
+              <span class="showcase-progress" aria-hidden="true"></span>
+            </button>
+            <button class="showcase-tab" type="button" role="tab" id="sc-tab-updates" aria-controls="sc-updates" aria-selected="false" tabindex="-1">
+              <span class="showcase-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg></span>
+              <span class="showcase-copy">
+                <span class="showcase-title" data-i18n="features.updates.title"></span>
+                <span class="showcase-text" id="sc-text-updates" data-i18n-html="features.updates.text"></span>
+              </span>
+              <span class="showcase-progress" aria-hidden="true"></span>
+            </button>
           </div>
-          <figure class="window">
-            <img class="only-dark" src="shots/screenshot-rules.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
-            <img class="only-light" src="shots/screenshot-rules-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
-          </figure>
-        </div>
-
-        <div class="feature reverse">
-          <div class="feature-text">
-            <h3 data-i18n="features.diagnostics.title"></h3>
-            <p data-i18n="features.diagnostics.text"></p>
+          <div class="showcase-stage">
+            <div class="showcase-slide shot-window is-active" role="tabpanel" id="sc-rules" aria-labelledby="sc-tab-rules" aria-describedby="sc-text-rules">
+              <img class="only-dark" src="shots/screenshot-rules.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
+              <img class="only-light" src="shots/screenshot-rules-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.rules.alt" />
+            </div>
+            <div class="showcase-slide shot-window" role="tabpanel" id="sc-diagnostics" aria-labelledby="sc-tab-diagnostics" aria-describedby="sc-text-diagnostics">
+              <img class="only-dark" src="shots/screenshot-diagnostics.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
+              <img class="only-light" src="shots/screenshot-diagnostics-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
+            </div>
+            <div class="showcase-slide shot-dialog" role="tabpanel" id="sc-clone" aria-labelledby="sc-tab-clone" aria-describedby="sc-text-clone" style="--shot-w: 760px">
+              <img class="only-dark" src="shots/screenshot-clone-dialog.png" width="1520" height="1494" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
+              <img class="only-light" src="shots/screenshot-clone-dialog-light.png" width="1520" height="1494" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
+            </div>
+            <div class="showcase-slide shot-dialog" role="tabpanel" id="sc-files" aria-labelledby="sc-tab-files" aria-describedby="sc-text-files" style="--shot-w: 680px">
+              <img class="only-dark" src="shots/screenshot-generated-dialog.png" width="1360" height="1512" loading="lazy" data-i18n-attr="alt:features.files.alt" />
+              <img class="only-light" src="shots/screenshot-generated-dialog-light.png" width="1360" height="1512" loading="lazy" data-i18n-attr="alt:features.files.alt" />
+            </div>
+            <div class="showcase-slide shot-panel" role="tabpanel" id="sc-updates" aria-labelledby="sc-tab-updates" aria-describedby="sc-text-updates" style="--shot-w: 503px">
+              <img class="only-dark" src="shots/screenshot-updates.png" width="1006" height="1102" loading="lazy" data-i18n-attr="alt:features.updates.alt" />
+              <img class="only-light" src="shots/screenshot-updates-light.png" width="1006" height="1102" loading="lazy" data-i18n-attr="alt:features.updates.alt" />
+            </div>
           </div>
-          <figure class="window">
-            <img class="only-dark" src="shots/screenshot-diagnostics.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
-            <img class="only-light" src="shots/screenshot-diagnostics-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.diagnostics.alt" />
-          </figure>
-        </div>
-
-        <div class="feature">
-          <div class="feature-text">
-            <h3 data-i18n="features.clone.title"></h3>
-            <p data-i18n="features.clone.text"></p>
-          </div>
-          <figure class="window">
-            <img class="only-dark" src="shots/screenshot-clone.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
-            <img class="only-light" src="shots/screenshot-clone-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.clone.alt" />
-          </figure>
-        </div>
-
-        <div class="feature reverse">
-          <div class="feature-text">
-            <h3 data-i18n="features.files.title"></h3>
-            <p data-i18n-html="features.files.text"></p>
-          </div>
-          <figure class="window">
-            <img class="only-dark" src="shots/screenshot-generated.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.files.alt" />
-            <img class="only-light" src="shots/screenshot-generated-light.png" width="1366" height="860" loading="lazy" data-i18n-attr="alt:features.files.alt" />
-          </figure>
         </div>
 
         <div class="grid-3 more">
@@ -263,6 +288,7 @@
         <details><summary data-i18n="faq.q4.q"></summary><p data-i18n-html="faq.q4.a"></p></details>
         <details><summary data-i18n="faq.q5.q"></summary><p data-i18n-html="faq.q5.a"></p></details>
         <details><summary data-i18n="faq.q6.q"></summary><p data-i18n-html="faq.q6.a"></p></details>
+        <details><summary data-i18n="faq.q7.q"></summary><p data-i18n-html="faq.q7.a"></p></details>
       </div>
     </section>
 

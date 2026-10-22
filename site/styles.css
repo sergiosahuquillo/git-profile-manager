@@ -148,7 +148,7 @@ svg.icon-fill { fill: currentColor; stroke: none; }
 
 /* ─── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
-  padding: 88px 0 0;
+  padding: 88px 0 72px;
   background:
     radial-gradient(60% 50% at 50% 0%, var(--glow), transparent 70%),
     var(--bg);
@@ -178,7 +178,7 @@ svg.icon-fill { fill: currentColor; stroke: none; }
   background: var(--surface);
   box-shadow: var(--shot-shadow);
 }
-.hero-shot { margin-top: 56px; margin-bottom: -2px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.hero-shot { margin-top: 56px; }
 
 /* ─── Secciones ──────────────────────────────────────────────────────────── */
 .section { padding: 96px 0; border-top: 1px solid var(--border-subtle); }
@@ -237,14 +237,75 @@ svg.icon-fill { fill: currentColor; stroke: none; }
 .code-window figcaption { padding: 12px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; background: var(--surface); }
 
 /* ─── Funciones ──────────────────────────────────────────────────────────── */
-.feature {
-  display: grid; grid-template-columns: 1fr 1.6fr; gap: 56px; align-items: center;
-  margin-bottom: 96px;
+/* Escaparate: pestañas a la izquierda y un escenario de proporción fija a la derecha. Cada captura se
+   centra en él a escala; las de una sola pieza (diálogo, panel) nunca pasan de su tamaño real (--shot-w). */
+.showcase {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 48px; align-items: start;
+  --showcase-time: 7s;
 }
-.feature.reverse .feature-text { order: 2; }
-.feature h3 { font-size: clamp(22px, 2.6vw, 28px); }
-.feature p { margin-top: 12px; color: var(--muted); font-size: 17px; }
-.more { margin-top: 16px; }
+/* Arriba y no centrada: si no, saltaría cada vez que cambia el largo del texto activo. */
+.showcase-list { display: grid; gap: 4px; padding-top: 8px; }
+.showcase-tab {
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 14px;
+  width: 100%; padding: 14px 16px;
+  background: none; border: 1px solid transparent; border-radius: var(--radius-lg);
+  color: var(--muted); font: inherit; text-align: left; cursor: pointer;
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+.showcase-tab:hover { background: var(--surface); color: var(--fg); }
+.showcase-tab.is-active { background: var(--surface); border-color: var(--border); color: var(--fg); }
+.showcase-tab:focus-visible { border-radius: var(--radius-lg); }
+.showcase-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--surface-inset); color: var(--muted);
+  transition: background-color .2s, color .2s;
+}
+.showcase-icon svg { width: 18px; height: 18px; }
+.showcase-tab.is-active .showcase-icon { background: var(--accent-subtle); color: var(--accent); }
+.showcase-copy { display: grid; gap: 6px; min-width: 0; padding-top: 5px; }
+.showcase-title { font-weight: 600; font-size: 17px; line-height: 1.3; }
+.showcase-text { display: none; color: var(--muted); font-size: 15px; }
+.showcase-tab.is-active .showcase-text { display: block; }
+
+/* Barra de avance: al terminar su animación, app.js pasa a la siguiente. Se para al pasar el ratón, con
+   el foco dentro o fuera de pantalla, y desaparece cuando el usuario elige una. */
+.showcase-progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent); }
+.showcase-tab.is-active .showcase-progress { animation: showcase-progress var(--showcase-time) linear forwards; }
+.showcase:hover .showcase-progress,
+.showcase:focus-within .showcase-progress,
+.showcase.is-offscreen .showcase-progress { animation-play-state: paused; }
+.showcase.is-manual .showcase-progress { display: none; }
+@keyframes showcase-progress { to { width: 100%; } }
+
+.showcase-stage {
+  position: relative; aspect-ratio: 5 / 4;
+  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 85% 0%, var(--glow), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, var(--glow), transparent 55%),
+    var(--surface);
+}
+.showcase-slide {
+  position: absolute; inset: 0; padding: 28px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transform: scale(.985);
+  transition: opacity .35s ease, transform .35s ease, visibility 0s linear .35s;
+}
+.showcase-slide.is-active { opacity: 1; visibility: visible; transform: none; transition: opacity .35s ease, transform .35s ease; }
+.showcase-slide img {
+  width: auto; height: auto; max-height: 100%; max-width: min(100%, var(--shot-w, 100%));
+  border-radius: 6px; box-shadow: var(--shot-shadow);
+}
+.shot-window img { border: 1px solid var(--border); border-radius: 10px; }
+.shot-dialog img { border-radius: 9px; }
+.shot-panel img { border-radius: 5px; }
+@media (prefers-reduced-motion: reduce) {
+  .showcase-slide, .showcase-slide.is-active { transition: none; transform: none; }
+}
+
+.more { margin-top: 64px; }
 
 /* ─── Preguntas ──────────────────────────────────────────────────────────── */
 .faq h2 { margin-bottom: 32px; }
@@ -280,16 +341,17 @@ details p { padding: 0 4px 20px; color: var(--muted); }
 
 /* ─── Pantallas estrechas ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .how-grid, .feature { grid-template-columns: 1fr; gap: 28px; }
-  .feature.reverse .feature-text { order: 0; }
-  .feature { margin-bottom: 72px; }
+  .how-grid { grid-template-columns: 1fr; gap: 28px; }
+  .showcase { grid-template-columns: 1fr; gap: 24px; }
+  .showcase-stage { aspect-ratio: 1; }
+  .showcase-slide { padding: 16px; }
   .grid-3 { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
   :root { --gutter: 16px; }
   .nav { display: none; }
   .topbar-actions { margin-left: auto; }
-  .hero { padding-top: 56px; }
+  .hero { padding-top: 56px; padding-bottom: 48px; }
   .hero-shot { margin-top: 40px; }
   .section { padding: 64px 0; }
   .grid-3 { grid-template-columns: 1fr; }
