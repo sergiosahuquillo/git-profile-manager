@@ -15,10 +15,11 @@ use gpm_core::git::GitUrl;
 use gpm_core::i18n::{self, Lang};
 use gpm_core::tr;
 use gpm_core::integration::{IntegrationPlan, IntegrationService, IntegrationStatus};
-use gpm_core::models::{AppState, CloneMethod, Profile, Rule, RuleType, SshClientKind};
+use gpm_core::models::{AppState, CloneMethod, Profile, Rule, RuleType, SshClientKind, UpdateMode};
 use gpm_core::profile_validator::{self, RuleConflict};
 use gpm_core::rule_matcher;
 use gpm_core::ssh::{AclFix, AgentState, ConnectionTestResult, SshKeyStatus, SshKeyType, SshManager};
+use gpm_core::updates::git::{self as git_update, GitInstallOptions, GitUpdateInfo, InstallOutcome, InstallScope};
 use gpm_core::workspace::SavePlan;
 use gpm_core::config::generator::normalize_folder;
 use serde::{Deserialize, Serialize};
@@ -181,6 +182,32 @@ pub struct CloneOutcome {
     pub result: CloneResult,
     pub destination: String,
     pub state: AppState,
+}
+
+#[derive(Serialize, Clone, Copy, TS)]
+#[ts(export)]
+pub enum UpdatePhase {
+    Downloading,
+    Verifying,
+    Installing,
+}
+
+/// Evento `git-update-progress`.
+#[derive(Serialize, Clone, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct UpdateProgress {
+    pub phase: UpdatePhase,
+    pub percent: u8,
+}
+
+#[derive(Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct GitInstallResult {
+    /// El usuario rechazó el UAC: no se ha instalado nada.
+    pub cancelled: bool,
+    pub environment: EnvironmentReport,
 }
 
 #[derive(Serialize, TS)]
@@ -978,6 +1005,107 @@ pub async fn clone_run(app: AppHandle, ctx: State<'_, Ctx>, input: CloneInput, r
         Ok(CloneOutcome { result, destination, state: s.state })
     })
     .await
+}
+
+// ─── Actualizaciones de Git ───────────────────────────────────────────────
+
+/// Modo de actualización elegido en Ajustes o en el primer arranque. No toca ficheros generados.
+#[tauri::command]
+pub async fn set_update_mode(ctx: State<'_, Ctx>, mode: UpdateMode) -> CmdResult<Overview> {
+    let ctx = ctx.inner().clone();
+    blocking(move || {
+        let mut ws = ctx.lock();
+        ws.save_state_only(|s| s.settings.update_mode = mode)?;
+        Ok(overview_of(&ws))
+    })
+    .await
+}
+
+fn git_busy() -> CmdError {
+    CmdError::new(tr!("Ya hay una actualización de Git en curso.", "A Git update is already in progress."))
+}
+
+/// Última versión de Git for Windows frente a la instalada. `None` si Git no está instalado.
+#[tauri::command]
+pub async fn check_git_update(ctx: State<'_, Ctx>) -> CmdResult<Option<GitUpdateInfo>> {
+    let ctx = ctx.inner().clone();
+    blocking(move || {
+        let s = ctx.snapshot();
+        if !s.git.is_available() {
+            return Ok(None);
+        }
+        let release = git_update::fetch_latest()?;
+        Ok(Some(git_update::info(&s.git, &s.paths, &release)))
+    })
+    .await
+}
+
+/// Descarga y verifica el instalador de la última versión (si ya estaba, lo reutiliza).
+#[tauri::command]
+pub async fn download_git_update(app: AppHandle, ctx: State<'_, Ctx>) -> CmdResult<GitUpdateInfo> {
+    let ctx = ctx.inner().clone();
+    blocking(move || {
+        let _guard = ctx.git_update_guard().ok_or_else(git_busy)?;
+        let s = ctx.snapshot();
+        let release = git_update::fetch_latest()?;
+        git_update::download(&s.paths, &release, |pct| emit_git_progress(&app, pct))?;
+        Ok(git_update::info(&s.git, &s.paths, &release))
+    })
+    .await
+}
+
+/// Descarga (si hace falta) e instala la última versión. Con UAC, espera a que el usuario responda.
+#[tauri::command]
+pub async fn install_git_update(app: AppHandle, ctx: State<'_, Ctx>) -> CmdResult<GitInstallResult> {
+    let ctx = ctx.inner().clone();
+    blocking(move || {
+        let _guard = ctx.git_update_guard().ok_or_else(git_busy)?;
+        let s = ctx.snapshot();
+        let release = git_update::fetch_latest()?;
+        let installer = git_update::download(&s.paths, &release, |pct| emit_git_progress(&app, pct))?;
+        let _ = app.emit("git-update-progress", UpdateProgress { phase: UpdatePhase::Installing, percent: 0 });
+        let outcome = git_update::install(&s.git, &installer)?;
+        Ok(GitInstallResult {
+            cancelled: outcome == InstallOutcome::Cancelled,
+            environment: environment::check(&ctx.lock()),
+        })
+    })
+    .await
+}
+
+/// Qué puede elegir el usuario para instalar Git donde no lo hay, y qué versión se instalará.
+#[tauri::command]
+pub async fn git_install_options() -> CmdResult<GitInstallOptions> {
+    blocking(|| Ok(git_update::install_options(&git_update::fetch_latest()?))).await
+}
+
+/// Descarga e instala Git donde no lo hay. Después lo vuelve a buscar: el PATH de la app es el de cuando
+/// se abrió, pero [`gpm_core::git::runner::locate`] también mira las carpetas de instalación estándar.
+#[tauri::command]
+pub async fn install_git(app: AppHandle, ctx: State<'_, Ctx>, scope: InstallScope) -> CmdResult<GitInstallResult> {
+    let ctx = ctx.inner().clone();
+    blocking(move || {
+        let _guard = ctx.git_update_guard().ok_or_else(git_busy)?;
+        let s = ctx.snapshot();
+        if s.git.is_available() {
+            return Err(CmdError::new(tr!("Git ya está instalado.", "Git is already installed.")));
+        }
+        let release = git_update::fetch_latest()?;
+        let installer = git_update::download(&s.paths, &release, |pct| emit_git_progress(&app, pct))?;
+        let _ = app.emit("git-update-progress", UpdateProgress { phase: UpdatePhase::Installing, percent: 0 });
+        let outcome = git_update::install_fresh(&installer, scope)?;
+        let mut ws = ctx.lock();
+        if outcome == InstallOutcome::Installed {
+            ws.git = gpm_core::git::GitRunner::new(&ws.paths, None);
+        }
+        Ok(GitInstallResult { cancelled: outcome == InstallOutcome::Cancelled, environment: environment::check(&ws) })
+    })
+    .await
+}
+
+fn emit_git_progress(app: &AppHandle, pct: u8) {
+    let phase = if pct >= 100 { UpdatePhase::Verifying } else { UpdatePhase::Downloading };
+    let _ = app.emit("git-update-progress", UpdateProgress { phase, percent: pct });
 }
 
 // ─── Shell y varios ───────────────────────────────────────────────────────

@@ -20,6 +20,10 @@ pub struct EnvironmentReport {
     pub git_version: Option<String>,
     pub git_ok: bool,
     pub gcm: GcmStatus,
+    /// GCM es el que trae Git for Windows: se actualiza con él.
+    pub gcm_bundled: bool,
+    /// Instalar una versión nueva de Git va a mostrar el diálogo de UAC.
+    pub git_update_prompts_uac: bool,
     pub windows_open_ssh_available: bool,
     pub git_bundled_ssh_available: bool,
     pub agent_state: AgentState,
@@ -60,6 +64,8 @@ pub fn check(ws: &Workspace) -> EnvironmentReport {
         git_path: git.git_path.as_ref().map(|p| p.to_string_lossy().into_owned()),
         git_version: version.map(format_version),
         git_ok: version.is_some_and(|v| v >= MINIMUM_VERSION),
+        gcm_bundled: root.as_ref().is_some_and(|r| gcm_in(r).is_file()),
+        git_update_prompts_uac: available && crate::updates::git::install_target(git).prompts_uac,
         gcm,
         windows_open_ssh_available: Path::new(&SshClientInfo::windows_openssh().native_ssh_path()).is_file(),
         git_bundled_ssh_available: root.as_ref().is_some_and(|r| r.join("usr").join("bin").join("ssh.exe").is_file()),
@@ -74,6 +80,11 @@ pub fn check(ws: &Workspace) -> EnvironmentReport {
         blocking_error,
         app_data_dir: ws.paths.app_data_dir.to_string_lossy().into_owned(),
     }
+}
+
+/// `git-credential-manager.exe` dentro de una instalación de Git for Windows.
+pub fn gcm_in(git_root: &Path) -> std::path::PathBuf {
+    git_root.join("mingw64").join("bin").join("git-credential-manager.exe")
 }
 
 #[derive(Clone, Debug, Serialize, TS)]

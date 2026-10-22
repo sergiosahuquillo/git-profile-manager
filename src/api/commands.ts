@@ -20,6 +20,10 @@ import type { EnvironmentReport } from "./bindings/EnvironmentReport";
 import type { FileChange } from "./bindings/FileChange";
 import type { FixAction } from "./bindings/FixAction";
 import type { GeneratedPreview } from "./bindings/GeneratedPreview";
+import type { GitInstallOptions } from "./bindings/GitInstallOptions";
+import type { GitInstallResult } from "./bindings/GitInstallResult";
+import type { GitUpdateInfo } from "./bindings/GitUpdateInfo";
+import type { InstallScope } from "./bindings/InstallScope";
 import type { IntegrationPlan } from "./bindings/IntegrationPlan";
 import type { Lang } from "./bindings/Lang";
 import type { Overview } from "./bindings/Overview";
@@ -35,6 +39,7 @@ import type { SshKeyStatus } from "./bindings/SshKeyStatus";
 import type { SshKeyType } from "./bindings/SshKeyType";
 import type { StoredAccount } from "./bindings/StoredAccount";
 import type { UninstallPlan } from "./bindings/UninstallPlan";
+import type { UpdateMode } from "./bindings/UpdateMode";
 
 export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -114,6 +119,13 @@ export const api = {
     invoke<CloneDefaults>("clone_defaults", { url, profileId }),
   clonePreview: (input: CloneInput) => invoke<ClonePreview>("clone_preview", { input }),
   cloneRun: (input: CloneInput, remedy: CloneRemedy) => invoke<CloneOutcome>("clone_run", { input, remedy }),
+
+  setUpdateMode: (mode: UpdateMode) => invoke<Overview>("set_update_mode", { mode }),
+  checkGitUpdate: () => invoke<GitUpdateInfo | null>("check_git_update"),
+  downloadGitUpdate: () => invoke<GitUpdateInfo>("download_git_update"),
+  installGitUpdate: () => invoke<GitInstallResult>("install_git_update"),
+  gitInstallOptions: () => invoke<GitInstallOptions>("git_install_options"),
+  installGit: (scope: InstallScope) => invoke<GitInstallResult>("install_git", { scope }),
 
   sourcetreeStatus: () => invoke<SourceTreeReport>("sourcetree_status"),
   openInExplorer: (path: string) => invoke<void>("open_in_explorer", { path }),

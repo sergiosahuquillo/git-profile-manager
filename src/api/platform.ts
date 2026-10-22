@@ -93,7 +93,54 @@ export async function onDragDrop(handler: DragDropHandler): Promise<() => void> 
 }
 
 export async function listen<T>(event: string, handler: (payload: T) => void): Promise<() => void> {
-  if (!inTauri) return () => undefined;
+  if (!inTauri) {
+    if (!import.meta.env.DEV) return () => undefined;
+    const { mockListen } = await import("./mock");
+    return mockListen(event, (p) => handler(p as T));
+  }
   const { listen: l } = await import("@tauri-apps/api/event");
   return l<T>(event, (e) => handler(e.payload));
+}
+
+// ─── Autoactualización de la app (plugin updater) ─────────────────────────
+
+export type AppUpdate = {
+  version: string;
+  /** Descarga e instala. `onProgress` recibe el porcentaje (o null si el servidor no da el tamaño). */
+  install: (onProgress: (pct: number | null) => void) => Promise<void>;
+};
+
+export async function appVersion(): Promise<string> {
+  if (!inTauri) return import.meta.env.DEV ? (await import("./mock")).mockAppVersion() : "";
+  const { getVersion } = await import("@tauri-apps/api/app");
+  return getVersion();
+}
+
+/** Versión nueva publicada de la app, o null si es la última. */
+export async function checkAppUpdate(): Promise<AppUpdate | null> {
+  if (!inTauri) return import.meta.env.DEV ? (await import("./mock")).mockAppUpdate() : null;
+  const { check } = await import("@tauri-apps/plugin-updater");
+  const update = await check();
+  if (!update) return null;
+  return {
+    version: update.version,
+    install: async (onProgress) => {
+      let total = 0;
+      let done = 0;
+      await update.downloadAndInstall((e) => {
+        if (e.event === "Started") total = e.data.contentLength ?? 0;
+        else if (e.event === "Progress") {
+          done += e.data.chunkLength;
+          onProgress(total ? Math.min(100, Math.round((done * 100) / total)) : null);
+        }
+      });
+    },
+  };
+}
+
+/** Reinicia la app. Fuera de Tauri no hace nada (el simulado ya "instaló" la versión nueva). */
+export async function relaunchApp(): Promise<void> {
+  if (!inTauri) return;
+  const { relaunch } = await import("@tauri-apps/plugin-process");
+  await relaunch();
 }

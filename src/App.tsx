@@ -14,6 +14,7 @@ import { Sidebar, StatusBar, TitleBar } from "./shell/Shell";
 import { confirmSave, refresh } from "./state/actions";
 import { startConnectionStatus } from "./state/connection";
 import { toast, useStore } from "./state/store";
+import { checkUpdates, startUpdates } from "./state/updates";
 import { DiagnosticsView } from "./views/DiagnosticsView";
 import { ProfilesView } from "./views/profiles/ProfilesView";
 import { RulesView } from "./views/RulesView";
@@ -101,13 +102,17 @@ export function App() {
             blocks: [],
           });
         } else if (b.firstLaunch && !b.overview.state.FirstRunCompleted && !b.environment.blockingError) {
+          // El asistente pregunta el modo de actualización y comprueba al cerrarse.
           s.setOnboardingOpen(true);
+          return;
         }
+        void checkUpdates();
       })
       .catch((e) => toast(errorMessage(e), "err"));
 
     const cleanups: Promise<() => void>[] = [
       startConnectionStatus(),
+      startUpdates(),
       onWindowFocus(() => void refresh()),
       onCloseRequested(() => {
         const st = useStore.getState();

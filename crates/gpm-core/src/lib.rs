@@ -20,6 +20,7 @@ pub mod profile_store;
 pub mod profile_validator;
 pub mod rule_matcher;
 pub mod ssh;
+pub mod updates;
 pub mod workspace;
 
 pub use app_paths::AppPaths;

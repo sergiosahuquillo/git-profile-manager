@@ -1,12 +1,15 @@
 // Armazón de la ventana: barra de título propia, barra lateral, avisos globales y barra de estado.
+import type { ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { api, errorMessage } from "../api/commands";
 import { windowAction } from "../api/platform";
 import { Icon } from "../components/Icon";
+import { InstallGitAction, UpdateTrail } from "../components/Updates";
 import { Banner, Btn } from "../components/ui";
 import { dateLocale, t as tr } from "../i18n";
 import { isDirty } from "../lib/profiles";
 import { NO_PROFILES, toast, useStore, type View } from "../state/store";
+import { useUpdates } from "../state/updates";
 
 export function useUnsavedCount(): number {
   const drafts = useStore((s) => s.drafts);
@@ -98,12 +101,19 @@ export function Sidebar() {
   const { t } = useTranslation();
   const conflicts = new Set(overview?.conflicts.map((c) => `${c.ruleA}|${c.ruleB}`)).size;
   const agent = env?.agentState;
-  const lines: { ok: boolean; text: string }[] = env
+  const gitUpdate = useUpdates((s) => s.git.phase !== "idle" && s.git.phase !== "checking");
+  const appVersion = useUpdates((s) => s.app.installed);
+  const lines: { ok: boolean; text: string; trail?: ReactNode; title?: string }[] = env
     ? [
-        { ok: env.gitOk, text: env.gitVersion ? `Git ${env.gitVersion}` : t("shell.env.gitMissing") },
+        {
+          ok: env.gitOk,
+          text: env.gitVersion ? `Git ${env.gitVersion}` : t("shell.env.gitMissing"),
+          trail: <UpdateTrail component="git" missing={!env.gitPath} />,
+        },
         {
           ok: env.gcm.installed,
           text: env.gcm.version ? `GCM ${env.gcm.version}` : t("shell.env.gcmMissing"),
+          title: env.gcmBundled && gitUpdate ? t("updates.withGit") : undefined,
         },
         {
           ok: agent === "Running",
@@ -116,6 +126,9 @@ export function Sidebar() {
                   ? t("shell.env.agentNotInstalled")
                   : t("shell.env.agentStopped"),
         },
+        ...(appVersion
+          ? [{ ok: true, text: `GitProfile Manager ${appVersion}`, trail: <UpdateTrail component="app" /> }]
+          : []),
       ]
     : [];
   return (
@@ -158,9 +171,10 @@ export function Sidebar() {
       </ul>
       <div className="sidebar-foot">
         {lines.map((l) => (
-          <div className="env-line" key={l.text}>
+          <div className="env-line" key={l.text} title={l.title}>
             <Icon name={l.ok ? "check" : "alert"} className={l.ok ? "icon" : "icon env-warn"} />
             <span className="od-truncate">{l.text}</span>
+            {l.trail}
           </div>
         ))}
       </div>
@@ -244,7 +258,13 @@ export function GlobalBanners() {
   return (
     <>
       {env?.blockingError && (
-        <Banner tone="danger" title={t("shell.banners.requirements")} text={env.blockingError} role="alert" />
+        <Banner
+          tone="danger"
+          title={t("shell.banners.requirements")}
+          text={env.blockingError}
+          role="alert"
+          actions={env.gitPath ? undefined : <InstallGitAction />}
+        />
       )}
       {!env?.blockingError && state.IntegrationEnabled && missing.length > 0 && !dismissed.integration && (
         <Banner

@@ -4,13 +4,16 @@ import { Trans, useTranslation } from "react-i18next";
 import type { AppState } from "../api/bindings/AppState";
 import type { GitProvider } from "../api/bindings/GitProvider";
 import type { IntegrationPlan } from "../api/bindings/IntegrationPlan";
+import type { UpdateMode } from "../api/bindings/UpdateMode";
 import { api, errorMessage } from "../api/commands";
 import { DiffBlocks } from "../components/DiffBlocks";
 import { Icon } from "../components/Icon";
 import { Modal } from "../components/Modal";
+import { InstallGitAction, UpdateModeChoices } from "../components/Updates";
 import { Banner, Btn, Choice, Field, gap, Pill } from "../components/ui";
 import { DEFAULT_HOST, EMAIL_RE, emptyProfile, PROVIDERS, slugify } from "../lib/profiles";
 import { toast, useStore } from "../state/store";
+import { checkUpdates } from "../state/updates";
 import { planBlocks } from "../views/SettingsView";
 
 export function OnboardingDialog() {
@@ -38,6 +41,7 @@ function Wizard() {
   const [provider, setProvider] = useState<GitProvider>("GitHub");
   const [errors, setErrors] = useState<string[]>([]);
   const [plan, setPlan] = useState<IntegrationPlan | null>(null);
+  const [updateMode, setUpdateMode] = useState<UpdateMode>(overview?.state.Settings.UpdateMode ?? "Auto");
   const blocked = Boolean(env?.blockingError);
   // Sin OpenSSH de Windows pero con el SSH de Git, se usa este último.
   const useGitSsh = Boolean(env && !env.windowsOpenSshAvailable && env.gitBundledSshAvailable);
@@ -62,6 +66,17 @@ function Wizard() {
     return { ...overview.state, Settings: settings, Profiles: [p] };
   };
 
+  // El modo de actualización se guarda salga como salga el asistente, y entonces se hace la primera
+  // comprobación (en el arranque se espera a que el usuario elija).
+  const saveUpdateMode = async () => {
+    try {
+      setOverview(await api.setUpdateMode(updateMode));
+    } catch {
+      /* se queda el valor por defecto */
+    }
+    void checkUpdates();
+  };
+
   const later = async () => {
     setOpen(false);
     try {
@@ -69,10 +84,11 @@ function Wizard() {
     } catch {
       /* se volverá a ofrecer en el siguiente arranque */
     }
+    await saveUpdateMode();
   };
 
   useEffect(() => {
-    if (step !== 3 || (!hasProfiles && mode === "keep")) return;
+    if (step !== 4 || (!hasProfiles && mode === "keep")) return;
     setPlan(null);
     api
       .integrationPlanEnable(hasGlobal && mode === "convert")
@@ -82,7 +98,8 @@ function Wizard() {
 
   const next = async () => {
     if (step === 1) return setStep(2);
-    if (step === 2) {
+    if (step === 2) return setStep(3);
+    if (step === 3) {
       if (creates) {
         const errs: string[] = [];
         if (!name.trim()) errs.push(t("onboarding.errName"));
@@ -99,9 +116,9 @@ function Wizard() {
           }
         }
       }
-      return setStep(3);
+      return setStep(4);
     }
-    // Paso 3: aquí sí se escribe, con copia de seguridad previa.
+    // Paso 4: aquí sí se escribe, con copia de seguridad previa.
     if (!hasProfiles && mode === "keep") {
       await later();
       toast(t("onboarding.keptGlobal"), "warn");
@@ -113,6 +130,7 @@ function Wizard() {
       setOverview(await api.integrationEnable(hasGlobal && mode === "convert"));
       setOverview(await api.setFirstRunCompleted(true));
       setOpen(false);
+      void saveUpdateMode();
       toast(t("onboarding.enabled"));
       useStore.getState().setStatus(t("settings.enable.status"));
     } catch (e) {
@@ -120,7 +138,12 @@ function Wizard() {
     }
   };
 
-  const notes = [t("onboarding.notes.env"), t("onboarding.notes.identity"), t("onboarding.notes.activate")];
+  const notes = [
+    t("onboarding.notes.env"),
+    t("onboarding.notes.updates"),
+    t("onboarding.notes.identity"),
+    t("onboarding.notes.activate"),
+  ];
 
   return (
     <Modal
@@ -131,18 +154,21 @@ function Wizard() {
       labelId="ob-title"
       steps={
         <ol className="steps" id="ob-steps">
-          {[t("onboarding.steps.env"), t("onboarding.steps.identity"), t("onboarding.steps.activate")].map(
-            (s, i) => (
-              <li
-                key={s}
-                className={`step${step === i + 1 ? " is-current" : ""}${step > i + 1 ? " is-done" : ""}`}
-                data-step={i + 1}
-              >
-                <span className="step-n">{i + 1}</span>
-                <span className="step-t">{s}</span>
-              </li>
-            ),
-          )}
+          {[
+            t("onboarding.steps.env"),
+            t("onboarding.steps.updates"),
+            t("onboarding.steps.identity"),
+            t("onboarding.steps.activate"),
+          ].map((s, i) => (
+            <li
+              key={s}
+              className={`step${step === i + 1 ? " is-current" : ""}${step > i + 1 ? " is-done" : ""}`}
+              data-step={i + 1}
+            >
+              <span className="step-n">{i + 1}</span>
+              <span className="step-t">{s}</span>
+            </li>
+          ))}
         </ol>
       }
       foot={
@@ -163,10 +189,10 @@ function Wizard() {
             variant="primary"
             id="ob-next"
             onClick={next}
-            disabled={blocked || (step === 3 && !plan && !(mode === "keep" && !hasProfiles))}
-            busyLabel={step === 3 ? t("onboarding.activating") : undefined}
+            disabled={blocked || (step === 4 && !plan && !(mode === "keep" && !hasProfiles))}
+            busyLabel={step === 4 ? t("onboarding.activating") : undefined}
           >
-            {step === 3 ? (
+            {step === 4 ? (
               mode === "keep" && !hasProfiles ? (
                 <span>{t("onboarding.finish")}</span>
               ) : (
@@ -248,6 +274,7 @@ function Wizard() {
                 title={t("onboarding.requirements")}
                 style={{ margin: 0 }}
                 text={t("onboarding.blockedText", { error: env.blockingError })}
+                actions={env.gitPath ? undefined : <InstallGitAction />}
               />
             ) : (
               <Banner
@@ -261,6 +288,37 @@ function Wizard() {
         )}
 
         {step === 2 && (
+          <div className="od-stack" style={gap(12)}>
+            <p>{t("updates.onboarding.intro")}</p>
+            <UpdateModeChoices
+              name="ob-updates"
+              value={updateMode}
+              onChange={setUpdateMode}
+              uac={env?.gitUpdatePromptsUac}
+            />
+            <div className="od-stack" style={gap(4)}>
+              <span className="kv-label">{t("updates.onboarding.what")}</span>
+              <ul className="check-list" role="list">
+                <li className="check-item">
+                  <Icon name="sync" />
+                  <span>
+                    <span className="check-name">{t("updates.git")}</span>
+                    <span className="check-detail">{t("updates.gitIncludes")}</span>
+                  </span>
+                </li>
+                <li className="check-item">
+                  <Icon name="sync" />
+                  <span>
+                    <span className="check-name">{t("updates.app")}</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <span className="field-help">{t("updates.onboarding.later")}</span>
+          </div>
+        )}
+
+        {step === 3 && (
           <div className="od-stack" style={gap(12)}>
             {hasProfiles ? (
               <p>
@@ -372,7 +430,7 @@ function Wizard() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="od-stack" style={gap(12)}>
             {!hasProfiles && mode === "keep" ? (
               <p>{t("onboarding.nothingToActivate")}</p>

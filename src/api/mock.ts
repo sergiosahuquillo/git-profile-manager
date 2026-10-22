@@ -6,6 +6,7 @@ import type { AppState } from "./bindings/AppState";
 import type { DiagnosticReport } from "./bindings/DiagnosticReport";
 import type { DiffLine } from "./bindings/DiffLine";
 import type { EnvironmentReport } from "./bindings/EnvironmentReport";
+import type { GitUpdateInfo } from "./bindings/GitUpdateInfo";
 import type { Overview } from "./bindings/Overview";
 import type { Profile } from "./bindings/Profile";
 import type { SavePlan } from "./bindings/SavePlan";
@@ -87,6 +88,7 @@ let state: AppState = {
     NoProfileMode: "DefaultProfile",
     GenerateSshAliases: true,
     Language: null,
+    UpdateMode: "Auto",
   },
   FileHashes: {},
   IntegrationEnabled: true,
@@ -99,6 +101,8 @@ const env: EnvironmentReport = {
   gitVersion: "2.47.1",
   gitOk: true,
   gcm: { version: "2.6.1", configuredAsHelper: true, helpers: ["manager"], installed: true },
+  gcmBundled: true,
+  gitUpdatePromptsUac: false,
   windowsOpenSshAvailable: true,
   gitBundledSshAvailable: true,
   agentState: "Running",
@@ -418,6 +422,85 @@ function report(path: string): DiagnosticReport {
 
 const delay = <T>(v: T, ms = 120) => new Promise<T>((r) => setTimeout(() => r(v), ms));
 
+// Actualizaciones simuladas. `?uac` en la URL simula Git en Program Files con diálogo de UAC.
+const promptsUac = typeof location !== "undefined" && new URLSearchParams(location.search).has("uac");
+env.gitUpdatePromptsUac = promptsUac;
+// `?nogit` simula un equipo sin Git: `?nogit&uac` como administrador con UAC, `?nogit&std` como usuario estándar.
+const params = typeof location !== "undefined" ? new URLSearchParams(location.search) : new URLSearchParams();
+const gitInstalled = { ...env };
+if (params.has("nogit")) {
+  Object.assign(env, {
+    gitPath: null,
+    gitVersion: null,
+    gitOk: false,
+    gcm: { version: null, configuredAsHelper: false, helpers: [], installed: false },
+    gcmBundled: false,
+    gitBundledSshAvailable: false,
+    blockingError: "No se encuentra Git. Instala Git for Windows 2.36 o posterior.",
+  });
+}
+let gitDownloaded = false;
+
+function gitUpdate(): GitUpdateInfo {
+  const available = env.gitVersion !== "2.56.0";
+  return {
+    installed: env.gitVersion,
+    latest: "2.56.0",
+    available,
+    size: 66_763_664,
+    perUser: false,
+    needsElevation: true,
+    promptsUac,
+    downloaded: available && gitDownloaded,
+  };
+}
+
+async function fakeDownload() {
+  if (gitDownloaded) return;
+  for (let pct = 0; pct <= 100; pct += 4) {
+    await delay(null, 90);
+    emitMock("git-update-progress", { phase: pct >= 100 ? "Verifying" : "Downloading", percent: pct });
+  }
+  await delay(null, 500);
+  gitDownloaded = true;
+}
+
+type MockListener = (payload: unknown) => void;
+const mockListeners = new Map<string, Set<MockListener>>();
+
+/** `listen` de platform.ts fuera de Tauri. */
+export function mockListen(event: string, handler: MockListener): () => void {
+  const set = mockListeners.get(event) ?? new Set();
+  set.add(handler);
+  mockListeners.set(event, set);
+  return () => set.delete(handler);
+}
+
+function emitMock(event: string, payload: unknown) {
+  for (const h of mockListeners.get(event) ?? []) h(payload);
+}
+
+let appVersionNow = "1.0.0";
+
+export function mockAppVersion(): string {
+  return appVersionNow;
+}
+
+export async function mockAppUpdate() {
+  await delay(null, 400);
+  if (appVersionNow === "1.1.0") return null;
+  return {
+    version: "1.1.0",
+    install: async (onProgress: (pct: number | null) => void) => {
+      for (let pct = 0; pct <= 100; pct += 5) {
+        await delay(null, 80);
+        onProgress(pct);
+      }
+      appVersionNow = "1.1.0";
+    },
+  };
+}
+
 export async function mockInvoke<T>(cmd: string, args: Record<string, unknown> = {}): Promise<T> {
   const a = args as Record<string, never>;
   const r = (v: unknown, ms?: number) => delay(v as T, ms);
@@ -444,6 +527,40 @@ export async function mockInvoke<T>(cmd: string, args: Record<string, unknown> =
     case "set_language":
       state = { ...state, Settings: { ...state.Settings, Language: a.lang } };
       return r(overview());
+    case "set_update_mode":
+      state = { ...state, Settings: { ...state.Settings, UpdateMode: a.mode } };
+      return r(overview());
+    case "check_git_update":
+      return r(env.gitPath ? gitUpdate() : null, 600);
+    case "git_install_options":
+      return r(
+        {
+          latest: "2.56.0",
+          size: 66_763_664,
+          canInstallMachine: !params.has("std"),
+          canInstallUser: true,
+          machinePromptsUac: promptsUac,
+        },
+        400,
+      );
+    case "install_git":
+      await fakeDownload();
+      emitMock("git-update-progress", { phase: "Installing", percent: 0 });
+      await delay(null, 2500);
+      gitDownloaded = false;
+      Object.assign(env, { ...gitInstalled, gitVersion: "2.56.0" });
+      if (a.scope === "User") env.gitPath = `${HOME}\\AppData\\Local\\Programs\\Git\\cmd\\git.exe`;
+      return r({ cancelled: false, environment: env });
+    case "download_git_update":
+      await fakeDownload();
+      return r(gitUpdate());
+    case "install_git_update":
+      await fakeDownload();
+      emitMock("git-update-progress", { phase: "Installing", percent: 0 });
+      await delay(null, 2500);
+      gitDownloaded = false;
+      env.gitVersion = "2.56.0";
+      return r({ cancelled: false, environment: env });
     case "set_first_run_completed":
       state = { ...state, FirstRunCompleted: a.completed };
       return r(overview());
