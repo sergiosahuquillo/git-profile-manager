@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "git-profile-manager"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "gpm-core",
@@ -1530,7 +1530,7 @@ dependencies = [
 
 [[package]]
 name = "gpm-core"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "hex",
