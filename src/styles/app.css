@@ -84,3 +84,6 @@ button.env-update.is-error:hover { background: var(--warn); color: #ffffff; }
 .update-state .spin { animation: spin 900ms linear infinite; }
 .kv .progress { display: block; margin-block-start: var(--space-1); }
 .kv .progress-bar { display: block; }
+
+/* Ajustes aprovecha las ventanas anchas: hasta 4 columnas de paneles (las demás vistas siguen a --content-max). */
+#view-ajustes { max-width: 1760px; }

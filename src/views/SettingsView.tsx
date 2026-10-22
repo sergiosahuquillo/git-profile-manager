@@ -10,6 +10,7 @@ import type { SshClientInfo } from "../api/bindings/SshClientInfo";
 import type { UpdateMode } from "../api/bindings/UpdateMode";
 import { api } from "../api/commands";
 import { Icon } from "../components/Icon";
+import { Masonry } from "../components/Masonry";
 import { UpdateModeChoices, UpdateRows } from "../components/Updates";
 import { Banner, Btn, Check, Choice, Field, gap, InlineStatus, Pill, Switch } from "../components/ui";
 import { currentLang, LANGS, setLanguage, t } from "../i18n";
@@ -276,8 +277,8 @@ export function SettingsView() {
 
       <GlobalBanners />
 
-      <div className="settings-grid">
-        <section className="panel" aria-labelledby="s-env">
+      <Masonry>
+        <section key="env" className="panel" aria-labelledby="s-env">
           <div className="panel-head od-row" id="s-env">
             <span className="od-fill">{t("settings.env.title")}</span>
             <Btn
@@ -403,99 +404,97 @@ export function SettingsView() {
           </div>
         </section>
 
-        <div className="od-stack" style={gap(16)}>
-          <section className="panel" aria-labelledby="s-ssh">
-            <div className="panel-head" id="s-ssh">
-              {t("settings.ssh.title")}
-            </div>
-            <div className="panel-body od-stack" style={gap(12)}>
-              <fieldset className="choice-set">
-                <legend className="sr-only">{t("settings.ssh.legend")}</legend>
-                <Choice
-                  name="sshclient"
-                  value="win"
-                  checked={settings.SshClient === "WindowsOpenSsh"}
-                  onChange={() => change({ SshClient: "WindowsOpenSsh" }, t("settings.ssh.changed"))}
-                  title={t("settings.ssh.winTitle")}
-                  tag={t("settings.ssh.recommended")}
-                  help={<Trans i18nKey="settings.ssh.winHelp" components={code} />}
-                />
-                <Choice
-                  name="sshclient"
-                  value="git"
-                  checked={settings.SshClient === "GitBundled"}
-                  onChange={() => change({ SshClient: "GitBundled" }, t("settings.ssh.changed"))}
-                  title={t("settings.ssh.gitTitle")}
-                  disabled={env ? !env.gitBundledSshAvailable : false}
-                  help={t("settings.ssh.gitHelp")}
-                />
-              </fieldset>
-              <span className="field-help">
-                <Trans
-                  i18nKey="settings.ssh.uses"
-                  values={{ ssh: client.sshPath, keygen: client.sshKeygenPath }}
-                  components={code}
-                />
-              </span>
-              <InlineStatus
-                tone={
-                  settings.SshClient === "WindowsOpenSsh"
-                    ? env?.agentState === "Running"
-                      ? "ok"
-                      : "warn"
-                    : "warn"
-                }
-                action={
-                  <Btn size="sm" className="od-fixed" onClick={checkAgent} busyLabel={t("common.checking")}>
-                    {t("common.check")}
-                  </Btn>
-                }
-              >
-                {settings.SshClient === "WindowsOpenSsh" ? (
-                  env?.agentState === "Running" ? (
-                    <Trans i18nKey="settings.agent.runningRich" components={code} />
-                  ) : (
-                    <Trans
-                      i18nKey="settings.agent.stateRich"
-                      values={{ state: env ? agentText(env.agentState).toLowerCase() : "…" }}
-                      components={code}
-                    />
-                  )
-                ) : (
-                  t("settings.agent.gitBash")
-                )}
-              </InlineStatus>
-              <Switch
-                checked={settings.GenerateSshAliases}
-                onChange={(v) =>
-                  change(
-                    { GenerateSshAliases: v },
-                    v ? t("settings.ssh.aliasesOn") : t("settings.ssh.aliasesOff"),
-                  )
-                }
-              >
-                <Trans i18nKey="settings.ssh.aliases" components={code} />
-              </Switch>
-            </div>
-          </section>
-
-          <section className="panel" aria-labelledby="s-updates">
-            <div className="panel-head" id="s-updates">
-              {t("updates.title")}
-            </div>
-            <div className="panel-body od-stack" style={gap(12)}>
-              <UpdateModeChoices
-                name="updatemode"
-                value={st.Settings.UpdateMode}
-                onChange={changeUpdateMode}
-                uac={env?.gitUpdatePromptsUac}
+        <section key="ssh" className="panel" aria-labelledby="s-ssh">
+          <div className="panel-head" id="s-ssh">
+            {t("settings.ssh.title")}
+          </div>
+          <div className="panel-body od-stack" style={gap(12)}>
+            <fieldset className="choice-set">
+              <legend className="sr-only">{t("settings.ssh.legend")}</legend>
+              <Choice
+                name="sshclient"
+                value="win"
+                checked={settings.SshClient === "WindowsOpenSsh"}
+                onChange={() => change({ SshClient: "WindowsOpenSsh" }, t("settings.ssh.changed"))}
+                title={t("settings.ssh.winTitle")}
+                tag={t("settings.ssh.recommended")}
+                help={<Trans i18nKey="settings.ssh.winHelp" components={code} />}
               />
-              <UpdateRows onCheck={() => checkUpdates(true)} off={st.Settings.UpdateMode === "Off"} />
-            </div>
-          </section>
-        </div>
+              <Choice
+                name="sshclient"
+                value="git"
+                checked={settings.SshClient === "GitBundled"}
+                onChange={() => change({ SshClient: "GitBundled" }, t("settings.ssh.changed"))}
+                title={t("settings.ssh.gitTitle")}
+                disabled={env ? !env.gitBundledSshAvailable : false}
+                help={t("settings.ssh.gitHelp")}
+              />
+            </fieldset>
+            <span className="field-help">
+              <Trans
+                i18nKey="settings.ssh.uses"
+                values={{ ssh: client.sshPath, keygen: client.sshKeygenPath }}
+                components={code}
+              />
+            </span>
+            <InlineStatus
+              tone={
+                settings.SshClient === "WindowsOpenSsh"
+                  ? env?.agentState === "Running"
+                    ? "ok"
+                    : "warn"
+                  : "warn"
+              }
+              action={
+                <Btn size="sm" className="od-fixed" onClick={checkAgent} busyLabel={t("common.checking")}>
+                  {t("common.check")}
+                </Btn>
+              }
+            >
+              {settings.SshClient === "WindowsOpenSsh" ? (
+                env?.agentState === "Running" ? (
+                  <Trans i18nKey="settings.agent.runningRich" components={code} />
+                ) : (
+                  <Trans
+                    i18nKey="settings.agent.stateRich"
+                    values={{ state: env ? agentText(env.agentState).toLowerCase() : "…" }}
+                    components={code}
+                  />
+                )
+              ) : (
+                t("settings.agent.gitBash")
+              )}
+            </InlineStatus>
+            <Switch
+              checked={settings.GenerateSshAliases}
+              onChange={(v) =>
+                change(
+                  { GenerateSshAliases: v },
+                  v ? t("settings.ssh.aliasesOn") : t("settings.ssh.aliasesOff"),
+                )
+              }
+            >
+              <Trans i18nKey="settings.ssh.aliases" components={code} />
+            </Switch>
+          </div>
+        </section>
 
-        <section className="panel" aria-labelledby="s-mode">
+        <section key="updates" className="panel" aria-labelledby="s-updates">
+          <div className="panel-head" id="s-updates">
+            {t("updates.title")}
+          </div>
+          <div className="panel-body od-stack" style={gap(12)}>
+            <UpdateModeChoices
+              name="updatemode"
+              value={st.Settings.UpdateMode}
+              onChange={changeUpdateMode}
+              uac={env?.gitUpdatePromptsUac}
+            />
+            <UpdateRows onCheck={() => checkUpdates(true)} off={st.Settings.UpdateMode === "Off"} />
+          </div>
+        </section>
+
+        <section key="mode" className="panel" aria-labelledby="s-mode">
           <div className="panel-head" id="s-mode">
             {t("settings.mode.title")}
           </div>
@@ -531,7 +530,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel" aria-labelledby="s-theme">
+        <section key="theme" className="panel" aria-labelledby="s-theme">
           <div className="panel-head" id="s-theme">
             {t("settings.appearance.title")}
           </div>
@@ -572,7 +571,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel" aria-labelledby="s-backups">
+        <section key="backups" className="panel" aria-labelledby="s-backups">
           <div className="panel-head od-row" id="s-backups">
             <span className="od-fill">{t("settings.backups.title")}</span>
             <Btn
@@ -611,7 +610,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel" aria-labelledby="s-first">
+        <section key="first" className="panel" aria-labelledby="s-first">
           <div className="panel-head" id="s-first">
             {t("settings.firstRun.title")}
           </div>
@@ -625,7 +624,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel" aria-labelledby="s-st">
+        <section key="st" className="panel" aria-labelledby="s-st">
           <div className="panel-head" id="s-st">
             SourceTree
           </div>
@@ -663,7 +662,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel panel-danger" aria-labelledby="s-int">
+        <section key="int" className="panel panel-danger" aria-labelledby="s-int">
           <div className="panel-head" id="s-int">
             {t("settings.integration.title")}
           </div>
@@ -727,7 +726,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        <section className="panel panel-danger" aria-labelledby="s-rm">
+        <section key="rm" className="panel panel-danger" aria-labelledby="s-rm">
           <div className="panel-head" id="s-rm">
             {t("settings.remove.title")}
           </div>
@@ -742,7 +741,7 @@ export function SettingsView() {
             </div>
           </div>
         </section>
-      </div>
+      </Masonry>
       {env?.blockingError && (
         <Banner tone="danger" title={t("settings.integration.blocked")} text={env.blockingError} />
       )}
