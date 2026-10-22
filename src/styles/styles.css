@@ -660,7 +660,10 @@ select.input { appearance: none; padding-inline-end: 28px;
 
 /* ═══ Vista: Ajustes ══════════════════════════════════════════════════════ */
 
-.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-4); align-items: start; }
+/* Paneles de Ajustes repartidos en columnas sin huecos (componente Masonry: calcula columnas y posiciones). */
+.masonry { position: relative; }
+.masonry-item { position: absolute; top: 0; left: 0; }
+.masonry.is-measuring .masonry-item { position: static; margin-block-end: var(--space-4); }
 
 .backup-list { display: grid; gap: var(--space-1); }
 .backup-item {
